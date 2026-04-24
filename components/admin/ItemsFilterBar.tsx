@@ -3,14 +3,22 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Search } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import type { Category } from '@/types';
 
 type ItemsFilterBarProps = {
   categories: Category[];
 };
 
-// Filter bar: search by title (debounce 300ms) + dropdown kategori + status.
-// Reset page ke 1 setiap filter berubah supaya tidak stuck di halaman kosong.
+const ALL = '__all__';
+
 export function ItemsFilterBar({ categories }: ItemsFilterBarProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -18,7 +26,6 @@ export function ItemsFilterBar({ categories }: ItemsFilterBarProps) {
   const [q, setQ] = useState(searchParams.get('q') ?? '');
   const initialMount = useRef(true);
 
-  // Keep query state in sync saat user back/forward.
   useEffect(() => {
     setQ(searchParams.get('q') ?? '');
   }, [searchParams]);
@@ -39,55 +46,61 @@ export function ItemsFilterBar({ categories }: ItemsFilterBarProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [q]);
 
-  function handleSelect(key: 'category' | 'status', value: string) {
+  function handleSelect(key: 'category' | 'status', value: string | null) {
     const next = new URLSearchParams(searchParams.toString());
-    if (value) next.set(key, value);
+    if (value && value !== ALL) next.set(key, value);
     else next.delete(key);
     next.delete('page');
     router.replace(`/admin/items?${next.toString()}`);
   }
 
   return (
-    <div className="flex flex-col gap-2 rounded-xl border border-slate-200 bg-white p-3 shadow-card md:flex-row md:items-center">
+    <div className="flex flex-col gap-2 md:flex-row md:items-center">
       <div className="relative flex-1">
         <Search
           aria-hidden
-          className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+          className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
         />
-        <input
+        <Input
           type="search"
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Cari judul item…"
           aria-label="Cari judul item"
-          className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
+          className="pl-9"
         />
       </div>
 
-      <select
-        value={searchParams.get('category') ?? ''}
-        onChange={(e) => handleSelect('category', e.target.value)}
-        className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
-        aria-label="Filter kategori"
+      <Select
+        value={searchParams.get('category') ?? ALL}
+        onValueChange={(v) => handleSelect('category', v)}
       >
-        <option value="">Semua Kategori</option>
-        {categories.map((c) => (
-          <option key={c.id} value={c.slug}>
-            {c.name}
-          </option>
-        ))}
-      </select>
+        <SelectTrigger className="md:w-[180px]" aria-label="Filter kategori">
+          <SelectValue placeholder="Semua Kategori" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value={ALL}>Semua Kategori</SelectItem>
+          {categories.map((c) => (
+            <SelectItem key={c.id} value={c.slug}>
+              {c.name}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
 
-      <select
-        value={searchParams.get('status') ?? ''}
-        onChange={(e) => handleSelect('status', e.target.value)}
-        className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
-        aria-label="Filter status"
+      <Select
+        value={searchParams.get('status') ?? ALL}
+        onValueChange={(v) => handleSelect('status', v)}
       >
-        <option value="">Semua Status</option>
-        <option value="published">Published</option>
-        <option value="draft">Draft</option>
-      </select>
+        <SelectTrigger className="md:w-[150px]" aria-label="Filter status">
+          <SelectValue placeholder="Semua Status" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value={ALL}>Semua Status</SelectItem>
+          <SelectItem value="published">Published</SelectItem>
+          <SelectItem value="draft">Draft</SelectItem>
+        </SelectContent>
+      </Select>
     </div>
   );
 }

@@ -18,8 +18,6 @@ type EmptyStateProps = {
   className?: string;
 };
 
-// Tampilan ketika belum ada data / hasil kosong.
-// Centered, icon opsional, title + description, action opsional.
 export function EmptyState({
   icon: Icon = Inbox,
   title,
@@ -30,25 +28,31 @@ export function EmptyState({
   return (
     <div
       className={cn(
-        'flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-white px-6 py-12 text-center',
+        'flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-card px-6 py-12 text-center',
         className,
       )}
     >
-      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary-light text-primary">
-        <Icon className="h-6 w-6" aria-hidden />
-      </div>
-      <h3 className="mt-4 text-base font-semibold text-slate-900">{title}</h3>
+      <Icon
+        className="h-8 w-8 text-muted-foreground"
+        strokeWidth={1.5}
+        aria-hidden
+      />
+      <h3 className="mt-4 text-sm font-medium text-foreground">{title}</h3>
       {description && (
-        <p className="mt-1 max-w-md text-sm text-slate-500">{description}</p>
+        <p className="mt-1 max-w-md text-sm text-muted-foreground">
+          {description}
+        </p>
       )}
       {action && (
         <div className="mt-5">
           {action.href ? (
-            <Link href={action.href} className={buttonVariants()}>
+            <Link href={action.href} className={buttonVariants({ size: 'sm' })}>
               {action.label}
             </Link>
           ) : (
-            <Button onClick={action.onClick}>{action.label}</Button>
+            <Button size="sm" onClick={action.onClick}>
+              {action.label}
+            </Button>
           )}
         </div>
       )}

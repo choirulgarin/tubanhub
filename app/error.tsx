@@ -3,9 +3,8 @@
 import { useEffect } from 'react';
 import Link from 'next/link';
 import { AlertTriangle, Home, RotateCw } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
-// Root error boundary — menangkap error di segment manapun.
-// Wajib 'use client' karena menerima callback `reset`.
 export default function RootError({
   error,
   reset,
@@ -14,47 +13,41 @@ export default function RootError({
   reset: () => void;
 }) {
   useEffect(() => {
-    // Di produksi ini akan ter-capture oleh Sentry/Vercel Logs via console.error.
     console.error('[RootError]', error);
   }, [error]);
 
   return (
     <div className="flex min-h-[60vh] items-center justify-center px-4 py-16">
       <div className="w-full max-w-lg text-center">
-        <div className="mb-6 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-red-50 text-red-600">
-          <AlertTriangle className="h-8 w-8" aria-hidden />
+        <div className="mb-6 inline-flex h-12 w-12 items-center justify-center rounded-lg border border-destructive/30 bg-card text-destructive">
+          <AlertTriangle className="h-6 w-6" strokeWidth={1.5} aria-hidden />
         </div>
 
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 md:text-3xl">
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
           Terjadi kesalahan
         </h1>
-        <p className="mt-3 text-sm text-slate-600 md:text-base">
+        <p className="mt-3 text-sm text-muted-foreground">
           Maaf, ada masalah saat memuat halaman ini. Coba lagi atau kembali
           ke beranda.
         </p>
 
         {error.digest && (
-          <p className="mt-2 text-xs text-slate-400">
-            Kode referensi: <code>{error.digest}</code>
+          <p className="mt-2 text-xs text-muted-foreground">
+            Kode referensi: <code className="font-mono">{error.digest}</code>
           </p>
         )}
 
-        <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-          <button
-            type="button"
-            onClick={reset}
-            className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-dark"
-          >
+        <div className="mt-8 flex flex-col items-center justify-center gap-2 sm:flex-row">
+          <Button type="button" onClick={reset}>
             <RotateCw className="h-4 w-4" aria-hidden />
             Coba lagi
-          </button>
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
-          >
-            <Home className="h-4 w-4" aria-hidden />
-            Ke Beranda
-          </Link>
+          </Button>
+          <Button asChild variant="outline">
+            <Link href="/">
+              <Home className="h-4 w-4" aria-hidden />
+              Ke Beranda
+            </Link>
+          </Button>
         </div>
       </div>
     </div>

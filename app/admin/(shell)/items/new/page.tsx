@@ -13,17 +13,17 @@ export default async function AdminNewItemPage() {
     <div className="space-y-6">
       <Link
         href="/admin/items"
-        className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-primary"
+        className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground"
       >
-        <ArrowLeft className="h-4 w-4" aria-hidden />
+        <ArrowLeft className="h-3.5 w-3.5" aria-hidden />
         Kembali ke daftar item
       </Link>
 
       <header>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 md:text-3xl">
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
           Tambah Item Baru
         </h1>
-        <p className="mt-1 text-sm text-slate-500">
+        <p className="mt-1 text-sm text-muted-foreground">
           Isi detail lengkap layanan, destinasi, atau tempat yang ingin
           dipublikasikan di TubanHub.
         </p>

@@ -70,7 +70,7 @@ export function TagInput({
   return (
     <div
       className={cn(
-        'flex min-h-[44px] flex-wrap items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2 py-1.5 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/30',
+        'flex min-h-[40px] flex-wrap items-center gap-1.5 rounded-md border border-input bg-background px-2 py-1.5 focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/30',
         className,
       )}
       onClick={(e) => {
@@ -82,13 +82,13 @@ export function TagInput({
       {value.map((tag, idx) => (
         <span
           key={`${tag}-${idx}`}
-          className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary"
+          className="inline-flex items-center gap-1 rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium text-secondary-foreground"
         >
           {tag}
           <button
             type="button"
             onClick={() => removeAt(idx)}
-            className="rounded-full p-0.5 hover:bg-primary/20"
+            className="rounded-full p-0.5 hover:bg-muted-foreground/20"
             aria-label={`Hapus tag ${tag}`}
           >
             <X className="h-3 w-3" aria-hidden />
@@ -104,7 +104,7 @@ export function TagInput({
         onBlur={handleBlur}
         placeholder={atMax ? 'Maksimum tercapai' : placeholder}
         disabled={atMax}
-        className="flex-1 min-w-[120px] bg-transparent px-1 py-1 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none disabled:opacity-50"
+        className="flex-1 min-w-[120px] bg-transparent px-1 py-1 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none disabled:opacity-50"
       />
     </div>
   );

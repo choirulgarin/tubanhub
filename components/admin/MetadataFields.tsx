@@ -2,6 +2,9 @@
 
 import type { ItemMetadata } from '@/types';
 import { TagInput } from '@/components/admin/TagInput';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 
 type MetadataFieldsProps = {
   categorySlug: string | null;
@@ -9,8 +12,6 @@ type MetadataFieldsProps = {
   onChange: (next: ItemMetadata) => void;
 };
 
-// Fields metadata berubah menyesuaikan kategori — hanya field yang relevan
-// yang ditampilkan sehingga admin tidak bingung dengan kolom kosong.
 export function MetadataFields({
   categorySlug,
   value,
@@ -32,7 +33,9 @@ export function MetadataFields({
   }
   function arr(key: string): string[] {
     const v = value?.[key];
-    return Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : [];
+    return Array.isArray(v)
+      ? v.filter((x): x is string => typeof x === 'string')
+      : [];
   }
   function bool(key: string): boolean {
     const v = value?.[key];
@@ -41,7 +44,7 @@ export function MetadataFields({
 
   if (!categorySlug) {
     return (
-      <p className="text-xs text-slate-500">
+      <p className="text-xs text-muted-foreground">
         Pilih kategori terlebih dulu untuk menampilkan field metadata.
       </p>
     );
@@ -60,40 +63,40 @@ export function MetadataFields({
           </Field>
           <TwoCol>
             <Field label="Biaya">
-              <TextInput
+              <Input
                 value={str('biaya')}
-                onChange={(v) => set('biaya', v)}
+                onChange={(e) => set('biaya', e.target.value)}
                 placeholder="Contoh: Gratis / Rp 50.000"
               />
             </Field>
             <Field label="Estimasi Waktu">
-              <TextInput
+              <Input
                 value={str('estimasi_waktu')}
-                onChange={(v) => set('estimasi_waktu', v)}
+                onChange={(e) => set('estimasi_waktu', e.target.value)}
                 placeholder="Contoh: 1–3 hari kerja"
               />
             </Field>
           </TwoCol>
           <Field label="Dasar Hukum">
-            <TextInput
+            <Input
               value={str('dasar_hukum')}
-              onChange={(v) => set('dasar_hukum', v)}
+              onChange={(e) => set('dasar_hukum', e.target.value)}
               placeholder="Contoh: UU No. 24 Tahun 2013"
             />
           </Field>
           <Field label="Catatan Tambahan">
             <Textarea
               value={str('catatan')}
-              onChange={(v) => set('catatan', v)}
+              onChange={(e) => set('catatan', e.target.value)}
               rows={3}
             />
           </Field>
           <Field label="Nomor Antrian (URL)">
-            <TextInput
-              value={str('nomor_antrian_url')}
-              onChange={(v) => set('nomor_antrian_url', v)}
-              placeholder="https://…"
+            <Input
               type="url"
+              value={str('nomor_antrian_url')}
+              onChange={(e) => set('nomor_antrian_url', e.target.value)}
+              placeholder="https://…"
             />
           </Field>
         </div>
@@ -104,16 +107,16 @@ export function MetadataFields({
         <div className="space-y-4">
           <TwoCol>
             <Field label="Harga Tiket">
-              <TextInput
+              <Input
                 value={str('harga_tiket')}
-                onChange={(v) => set('harga_tiket', v)}
+                onChange={(e) => set('harga_tiket', e.target.value)}
                 placeholder="Contoh: Rp 10.000"
               />
             </Field>
             <Field label="Jam Buka (ringkas)">
-              <TextInput
+              <Input
                 value={str('jam_buka')}
-                onChange={(v) => set('jam_buka', v)}
+                onChange={(e) => set('jam_buka', e.target.value)}
                 placeholder="Contoh: 08:00 – 17:00"
               />
             </Field>
@@ -140,19 +143,19 @@ export function MetadataFields({
         <div className="space-y-4">
           <TwoCol>
             <Field label="Kisaran Harga">
-              <TextInput
+              <Input
                 value={str('price_range')}
-                onChange={(v) => set('price_range', v)}
+                onChange={(e) => set('price_range', e.target.value)}
                 placeholder="Contoh: Rp 15.000 – Rp 50.000"
               />
             </Field>
             <Field label="Halal">
-              <label className="inline-flex items-center gap-2 text-sm">
+              <label className="inline-flex items-center gap-2 text-sm text-foreground">
                 <input
                   type="checkbox"
                   checked={bool('halal')}
                   onChange={(e) => set('halal', e.target.checked || null)}
-                  className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary"
+                  className="h-4 w-4 rounded border-border text-primary focus:ring-ring"
                 />
                 Bersertifikat / diakui halal
               </label>
@@ -173,24 +176,24 @@ export function MetadataFields({
         <div className="space-y-4">
           <TwoCol>
             <Field label="Harga Mulai">
-              <TextInput
+              <Input
                 value={str('harga_mulai')}
-                onChange={(v) => set('harga_mulai', v)}
+                onChange={(e) => set('harga_mulai', e.target.value)}
                 placeholder="Contoh: Rp 100.000"
               />
             </Field>
             <Field label="Armada / Peralatan">
-              <TextInput
+              <Input
                 value={str('armada')}
-                onChange={(v) => set('armada', v)}
+                onChange={(e) => set('armada', e.target.value)}
                 placeholder="Contoh: Avanza, Innova"
               />
             </Field>
           </TwoCol>
           <Field label="Area Layanan">
-            <TextInput
+            <Input
               value={str('area_layanan')}
-              onChange={(v) => set('area_layanan', v)}
+              onChange={(e) => set('area_layanan', e.target.value)}
               placeholder="Contoh: Tuban & sekitarnya"
             />
           </Field>
@@ -199,14 +202,13 @@ export function MetadataFields({
 
     default:
       return (
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-muted-foreground">
           Tidak ada field metadata khusus untuk kategori ini.
         </p>
       );
   }
 }
 
-// --- small UI helpers (private) ---
 function Field({
   label,
   children,
@@ -215,56 +217,13 @@ function Field({
   children: React.ReactNode;
 }) {
   return (
-    <label className="block">
-      <span className="mb-1.5 block text-xs font-medium text-slate-600">
-        {label}
-      </span>
+    <div className="space-y-1.5">
+      <Label>{label}</Label>
       {children}
-    </label>
+    </div>
   );
 }
 
 function TwoCol({ children }: { children: React.ReactNode }) {
   return <div className="grid gap-4 md:grid-cols-2">{children}</div>;
-}
-
-function TextInput({
-  value,
-  onChange,
-  placeholder,
-  type = 'text',
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  placeholder?: string;
-  type?: string;
-}) {
-  return (
-    <input
-      type={type}
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      placeholder={placeholder}
-      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
-    />
-  );
-}
-
-function Textarea({
-  value,
-  onChange,
-  rows = 3,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  rows?: number;
-}) {
-  return (
-    <textarea
-      rows={rows}
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
-    />
-  );
 }

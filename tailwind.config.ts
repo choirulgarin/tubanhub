@@ -1,9 +1,14 @@
 import type { Config } from 'tailwindcss';
 
-// Konfigurasi Tailwind TubanHub.
-// - Warna brand (primary/secondary/accent/purple): hex langsung sesuai design token.
-// - Token shadcn netral (background, foreground, card, dll): via CSS variable HSL.
-// - Font utama: Inter (di-inject dari next/font di app/layout.tsx lewat --font-sans).
+/**
+ * Tailwind config TubanHub — pendekatan hybrid:
+ *   - Token netral shadcn (background/foreground/muted/card/border/input/ring/popover/secondary/accent/destructive)
+ *     via CSS variable HSL di globals.css → konsisten dengan komponen shadcn/ui.
+ *   - Brand palette TubanHub (`brand.blue/green/orange/purple` + legacy `primary`)
+ *     sebagai warna hex langsung → dipakai untuk warna kategori & CTA brand.
+ *
+ * Font: Geist (sans + mono) via next/font → variable `--font-geist-sans` / `--font-geist-mono`.
+ */
 const config: Config = {
   darkMode: ['class'],
   content: [
@@ -21,39 +26,20 @@ const config: Config = {
     },
     extend: {
       fontFamily: {
-        sans: ['var(--font-sans)', 'Inter', 'system-ui', 'sans-serif'],
+        sans: ['var(--font-geist-sans)', 'system-ui', 'sans-serif'],
+        mono: ['var(--font-geist-mono)', 'ui-monospace', 'monospace'],
       },
       colors: {
-        // --- Brand TubanHub (hex langsung) ---
-        primary: {
-          DEFAULT: '#2563EB',
-          dark: '#1D4ED8',
-          light: '#DBEAFE',
-          foreground: '#FFFFFF',
-        },
-        secondary: {
-          DEFAULT: '#16A34A',
-          dark: '#15803D',
-          light: '#DCFCE7',
-          foreground: '#FFFFFF',
-        },
-        accent: {
-          DEFAULT: '#EA580C',
-          light: '#FFEDD5',
-          foreground: '#FFFFFF',
-        },
-        purple: {
-          DEFAULT: '#7C3AED',
-          light: '#EDE9FE',
-          foreground: '#FFFFFF',
-        },
-
-        // --- Token shadcn via CSS variable (HSL) ---
-        border: 'hsl(var(--border, 214 32% 91%))',
+        // --- shadcn neutral tokens (HSL) ---
+        border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
+        secondary: {
+          DEFAULT: 'hsl(var(--secondary))',
+          foreground: 'hsl(var(--secondary-foreground))',
+        },
         destructive: {
           DEFAULT: 'hsl(var(--destructive))',
           foreground: 'hsl(var(--destructive-foreground))',
@@ -61,6 +47,10 @@ const config: Config = {
         muted: {
           DEFAULT: 'hsl(var(--muted))',
           foreground: 'hsl(var(--muted-foreground))',
+        },
+        accent: {
+          DEFAULT: 'hsl(var(--accent))',
+          foreground: 'hsl(var(--accent-foreground))',
         },
         popover: {
           DEFAULT: 'hsl(var(--popover))',
@@ -70,16 +60,26 @@ const config: Config = {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
         },
+
+        // --- Brand TubanHub (hex) ---
+        // `primary` dipakai untuk CTA utama — identik ke brand biru Tuban.
+        primary: {
+          DEFAULT: '#2563EB',
+          foreground: '#FFFFFF',
+          dark: '#1D4ED8',
+          light: '#DBEAFE',
+        },
+        brand: {
+          blue: '#2563EB',
+          green: '#16A34A',
+          orange: '#EA580C',
+          purple: '#7C3AED',
+        },
       },
       borderRadius: {
-        app: '12px',
         lg: 'var(--radius)',
         md: 'calc(var(--radius) - 2px)',
         sm: 'calc(var(--radius) - 4px)',
-      },
-      boxShadow: {
-        card: '0 2px 8px rgba(0, 0, 0, 0.08)',
-        'card-hover': '0 8px 25px rgba(0, 0, 0, 0.12)',
       },
       keyframes: {
         'accordion-down': {

@@ -69,6 +69,7 @@ export async function POST(request: Request) {
     description: strOrNull(b.description, 2000),
     contact: strOrNull(b.contact, 120),
     submitted_by: strOrNull(b.submitted_by, 120),
+    submitted_contact: strOrNull(b.submitted_contact, 30),
   };
 
   // Pakai anon client — policy "Anyone can submit suggestions" mengizinkan insert.

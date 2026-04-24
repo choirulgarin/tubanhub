@@ -1,6 +1,13 @@
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
-import type { Category, ItemWithCategory, SearchResult } from '@/types';
+import type {
+  Ad,
+  AdPlacement,
+  Announcement,
+  Category,
+  ItemWithCategory,
+  SearchResult,
+} from '@/types';
 
 // Query helpers server-side. Menelan error agar UI bisa graceful fallback
 // (return array kosong) saat DB belum siap / tabel belum di-migrate.
@@ -59,11 +66,15 @@ export async function getFeaturedItems(
   return (data ?? []) as ItemWithCategory[];
 }
 
+export type ItemsSort = 'newest' | 'popular' | 'az';
+
 // Ambil semua item published untuk sebuah kategori.
 // Parameter `subcategory` (opsional) memfilter berdasar kolom subcategory.
+// Parameter `sort` (opsional, default: 'az') mengatur urutan hasil.
 export async function getItemsByCategory(
   categorySlug: string,
   subcategory?: string,
+  sort: ItemsSort = 'az',
 ): Promise<ItemWithCategory[]> {
   const supabase = createClient();
   let query = supabase
@@ -76,10 +87,16 @@ export async function getItemsByCategory(
     query = query.eq('subcategory', subcategory);
   }
 
-  const { data, error } = await query
-    .order('is_verified', { ascending: false })
-    .order('view_count', { ascending: false })
-    .order('created_at', { ascending: false });
+  query = query.order('is_verified', { ascending: false });
+  if (sort === 'newest') {
+    query = query.order('created_at', { ascending: false });
+  } else if (sort === 'popular') {
+    query = query.order('view_count', { ascending: false });
+  } else {
+    query = query.order('title', { ascending: true });
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     console.warn(`[getItemsByCategory:${categorySlug}]`, error.message);
@@ -177,6 +194,116 @@ export async function getRelatedItems(
     return [];
   }
   return (data ?? []) as ItemWithCategory[];
+}
+
+// =========================================================================
+// ANNOUNCEMENTS — pengumuman & berita penting.
+// =========================================================================
+
+// List pengumuman aktif (published, belum expired).
+// Urutan: pinned dulu, lalu published_at terbaru.
+export async function getAnnouncements(
+  limit?: number,
+): Promise<Announcement[]> {
+  const supabase = createClient();
+  const nowIso = new Date().toISOString();
+  let query = supabase
+    .from('announcements')
+    .select('*')
+    .eq('is_published', true)
+    .or(`expires_at.is.null,expires_at.gt.${nowIso}`)
+    .order('is_pinned', { ascending: false })
+    .order('published_at', { ascending: false, nullsFirst: false })
+    .order('created_at', { ascending: false });
+
+  if (limit) query = query.limit(limit);
+
+  const { data, error } = await query;
+  if (error) {
+    console.warn('[getAnnouncements]', error.message);
+    return [];
+  }
+  return (data ?? []) as Announcement[];
+}
+
+// Pengumuman terbaru yang dipin — dipakai untuk banner di landing.
+export async function getActiveBannerAnnouncement(): Promise<Announcement | null> {
+  const supabase = createClient();
+  const nowIso = new Date().toISOString();
+  const { data, error } = await supabase
+    .from('announcements')
+    .select('*')
+    .eq('is_published', true)
+    .eq('is_pinned', true)
+    .or(`expires_at.is.null,expires_at.gt.${nowIso}`)
+    .order('published_at', { ascending: false, nullsFirst: false })
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    console.warn('[getActiveBannerAnnouncement]', error.message);
+    return null;
+  }
+  return (data as Announcement | null) ?? null;
+}
+
+export async function getAnnouncementById(
+  id: string,
+): Promise<Announcement | null> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from('announcements')
+    .select('*')
+    .eq('id', id)
+    .eq('is_published', true)
+    .maybeSingle();
+
+  if (error) {
+    console.warn(`[getAnnouncementById:${id}]`, error.message);
+    return null;
+  }
+  return (data as Announcement | null) ?? null;
+}
+
+// =========================================================================
+// ADS — iklan lokal.
+// =========================================================================
+
+// Ambil iklan aktif untuk placement tertentu.
+// Kalau categorySlug diberikan, iklan yang category_slug-nya null (global)
+// dan yang match akan keduanya di-consider; prioritas yang match duluan.
+export async function getActiveAds(
+  placement: AdPlacement,
+  categorySlug?: string,
+  limit = 3,
+): Promise<Ad[]> {
+  const supabase = createClient();
+  const nowIso = new Date().toISOString();
+
+  let query = supabase
+    .from('ads')
+    .select('*')
+    .eq('is_active', true)
+    .eq('placement', placement)
+    .or(`starts_at.is.null,starts_at.lte.${nowIso}`)
+    .or(`ends_at.is.null,ends_at.gt.${nowIso}`);
+
+  if (categorySlug) {
+    query = query.or(`category_slug.is.null,category_slug.eq.${categorySlug}`);
+  } else {
+    query = query.is('category_slug', null);
+  }
+
+  const { data, error } = await query
+    .order('created_at', { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    console.warn(`[getActiveAds:${placement}]`, error.message);
+    return [];
+  }
+  return (data ?? []) as Ad[];
 }
 
 // Pencarian menggunakan kombinasi ilike (title/description/address) + contains (tags).

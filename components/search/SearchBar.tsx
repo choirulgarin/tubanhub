@@ -73,13 +73,13 @@ export function SearchBar({
       role="search"
       onSubmit={handleSubmit}
       className={cn(
-        'group relative flex w-full items-center rounded-full bg-white shadow-card ring-1 ring-slate-200 transition focus-within:ring-2 focus-within:ring-primary',
+        'group relative flex w-full items-center rounded-full border border-border bg-background transition focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/30',
         className,
       )}
     >
       <Search
         aria-hidden
-        className="pointer-events-none ml-4 h-5 w-5 shrink-0 text-slate-400 group-focus-within:text-primary"
+        className="pointer-events-none ml-4 h-4 w-4 shrink-0 text-muted-foreground"
       />
       <input
         ref={inputRef}
@@ -90,21 +90,21 @@ export function SearchBar({
         placeholder={placeholder}
         autoFocus={autoFocus}
         aria-label="Kata kunci pencarian"
-        className="flex-1 bg-transparent px-3 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none md:text-base"
+        className="flex-1 bg-transparent px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
       />
       {value && (
         <button
           type="button"
           onClick={handleClear}
           aria-label="Bersihkan pencarian"
-          className="mr-1 flex h-8 w-8 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+          className="mr-1 flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition hover:bg-muted hover:text-foreground"
         >
           <X className="h-4 w-4" aria-hidden />
         </button>
       )}
       <button
         type="submit"
-        className="mr-1.5 hidden h-9 items-center rounded-full bg-primary px-5 text-sm font-semibold text-white transition hover:bg-primary-dark md:inline-flex"
+        className="mr-1.5 hidden h-8 items-center rounded-full bg-primary px-4 text-xs font-medium text-primary-foreground transition hover:bg-primary/90 md:inline-flex"
       >
         Cari
       </button>

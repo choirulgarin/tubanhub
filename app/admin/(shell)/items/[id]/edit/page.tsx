@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ArrowLeft, ExternalLink } from 'lucide-react';
 import { ItemForm } from '@/components/admin/ItemForm';
+import { Button } from '@/components/ui/button';
 import { getCategories } from '@/lib/queries';
 import { createAdminClient } from '@/lib/supabase/admin';
 import type { Item } from '@/types';
@@ -29,9 +30,11 @@ export default async function AdminEditItemPage({ params }: PageProps) {
   if (error || !item) notFound();
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? '';
-  const categorySlug =
-    (item as unknown as { category: { slug: string } | { slug: string }[] | null })
-      .category;
+  const categorySlug = (
+    item as unknown as {
+      category: { slug: string } | { slug: string }[] | null;
+    }
+  ).category;
   const publicSlug = Array.isArray(categorySlug)
     ? categorySlug[0]?.slug
     : categorySlug?.slug;
@@ -42,31 +45,29 @@ export default async function AdminEditItemPage({ params }: PageProps) {
     <div className="space-y-6">
       <Link
         href="/admin/items"
-        className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-primary"
+        className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground"
       >
-        <ArrowLeft className="h-4 w-4" aria-hidden />
+        <ArrowLeft className="h-3.5 w-3.5" aria-hidden />
         Kembali ke daftar item
       </Link>
 
       <header className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 md:text-3xl">
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
             Edit Item
           </h1>
-          <p className="mt-1 text-sm text-slate-500">
-            Perbarui informasi <span className="font-medium">{item.title}</span>.
+          <p className="mt-1 text-sm text-muted-foreground">
+            Perbarui informasi{' '}
+            <span className="font-medium text-foreground">{item.title}</span>.
           </p>
         </div>
         {publicUrl && (
-          <Link
-            href={publicUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
-          >
-            <ExternalLink className="h-4 w-4" aria-hidden />
-            Lihat halaman publik
-          </Link>
+          <Button asChild size="sm" variant="outline">
+            <Link href={publicUrl} target="_blank" rel="noopener noreferrer">
+              <ExternalLink className="h-4 w-4" aria-hidden />
+              Lihat halaman publik
+            </Link>
+          </Button>
         )}
       </header>
 

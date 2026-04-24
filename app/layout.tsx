@@ -1,22 +1,15 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter } from 'next/font/google';
-import { cn } from '@/lib/utils';
+import { GeistSans } from 'geist/font/sans';
+import { GeistMono } from 'geist/font/mono';
 import { Toaster } from 'sonner';
-import { Navbar } from '@/components/layout/Navbar';
-import { Footer } from '@/components/layout/Footer';
-import { InstallPrompt } from '@/components/pwa/InstallPrompt';
-import { OfflineIndicator } from '@/components/pwa/OfflineIndicator';
+import { cn } from '@/lib/utils';
 import './globals.css';
 
-const inter = Inter({
-  subsets: ['latin'],
-  variable: '--font-sans',
-  display: 'swap',
-});
-
-// URL dasar untuk OG/canonical — fallback ke localhost saat dev.
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
 
+// Root layout — hanya membungkus html/body, font, meta PWA, dan Toaster.
+// Navbar/Footer publik dipasang di app/(public)/layout.tsx. Admin punya layout
+// sendiri di app/admin/(shell)/layout.tsx sehingga tidak kejatuhan Footer.
 export const metadata: Metadata = {
   metadataBase: new URL(APP_URL),
   title: {
@@ -85,9 +78,12 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="id" className={cn('font-sans', inter.variable)}>
+    <html
+      lang="id"
+      className={cn(GeistSans.variable, GeistMono.variable)}
+      suppressHydrationWarning
+    >
       <head>
-        {/* Meta tags PWA tambahan yang tidak ter-cover API Metadata */}
         <meta name="application-name" content="TubanHub" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
@@ -97,12 +93,8 @@ export default function RootLayout({
         <link rel="manifest" href="/manifest.json" />
         <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
       </head>
-      <body className="flex min-h-dvh flex-col bg-slate-50 font-sans text-slate-900 antialiased">
-        <OfflineIndicator />
-        <Navbar />
-        <main className="flex-1">{children}</main>
-        <Footer />
-        <InstallPrompt />
+      <body className="flex min-h-dvh flex-col bg-background font-sans text-foreground antialiased">
+        {children}
         <Toaster
           position="top-center"
           richColors

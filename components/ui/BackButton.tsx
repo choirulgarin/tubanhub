@@ -36,7 +36,7 @@ export function BackButton({
       type="button"
       onClick={handleClick}
       className={cn(
-        'inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 transition hover:text-primary',
+        'inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition hover:text-foreground',
         className,
       )}
     >

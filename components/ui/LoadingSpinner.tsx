@@ -38,7 +38,7 @@ export function LoadingSpinner({
         className="flex min-h-[50vh] w-full flex-col items-center justify-center gap-3"
       >
         {spinner}
-        <span className="text-sm text-slate-500">{label}</span>
+        <span className="text-sm text-muted-foreground">{label}</span>
       </div>
     );
   }

@@ -13,16 +13,16 @@ type PageHeaderProps = {
   description?: string;
   icon?: LucideIcon;
   /**
-   * Warna hex kategori (contoh: "#2563EB"). Dipakai untuk tint gradient dan icon.
-   * Kalau tidak diisi, default ke biru primary.
+   * Warna hex kategori (contoh: "#2563EB"). Dipakai hanya untuk tint
+   * icon kecil di kiri judul. Tanpa gradient mencolok.
    */
   color?: string;
   breadcrumb?: Breadcrumb[];
   className?: string;
 };
 
-// Header halaman yang konsisten untuk kategori & halaman utama.
-// Gradient halus berdasarkan `color`, breadcrumb di atas, icon besar di kanan (desktop only).
+// Header halaman minimalis: breadcrumb + icon kecil + judul + deskripsi.
+// Background netral (bg-muted/20) dengan border bawah — tanpa gradient.
 export function PageHeader({
   title,
   description,
@@ -31,25 +31,12 @@ export function PageHeader({
   breadcrumb,
   className,
 }: PageHeaderProps) {
-  // Gradient halus: warna kategori + background netral.
-  // `inline style` dipakai di sini karena warna datang dari data dinamis
-  // (per-kategori), bukan token Tailwind statis.
-  const gradientStyle = {
-    backgroundImage: `linear-gradient(135deg, ${color}14 0%, ${color}05 60%, transparent 100%)`,
-  };
-
   return (
-    <section
-      className={cn(
-        'relative overflow-hidden border-b border-slate-200 bg-white',
-        className,
-      )}
-      style={gradientStyle}
-    >
-      <div className="container-app relative py-8 md:py-12">
+    <section className={cn('border-b border-border bg-muted/20', className)}>
+      <div className="mx-auto w-full max-w-6xl px-4 py-8 md:py-10">
         {breadcrumb && breadcrumb.length > 0 && (
-          <nav aria-label="Breadcrumb" className="mb-4">
-            <ol className="flex flex-wrap items-center gap-1 text-xs text-slate-500">
+          <nav aria-label="Breadcrumb" className="mb-3">
+            <ol className="flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
               {breadcrumb.map((item, idx) => {
                 const isLast = idx === breadcrumb.length - 1;
                 return (
@@ -57,21 +44,19 @@ export function PageHeader({
                     {item.href && !isLast ? (
                       <Link
                         href={item.href}
-                        className="hover:text-primary hover:underline"
+                        className="transition-colors hover:text-foreground"
                       >
                         {item.label}
                       </Link>
                     ) : (
                       <span
                         aria-current={isLast ? 'page' : undefined}
-                        className={cn(isLast && 'font-medium text-slate-700')}
+                        className={cn(isLast && 'text-foreground')}
                       >
                         {item.label}
                       </span>
                     )}
-                    {!isLast && (
-                      <ChevronRight className="h-3 w-3" aria-hidden />
-                    )}
+                    {!isLast && <ChevronRight className="h-3 w-3" aria-hidden />}
                   </li>
                 );
               })}
@@ -79,27 +64,26 @@ export function PageHeader({
           </nav>
         )}
 
-        <div className="flex items-start justify-between gap-6">
-          <div className="min-w-0 max-w-3xl">
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900 md:text-4xl">
+        <div className="flex items-start gap-3">
+          {Icon && (
+            <div
+              aria-hidden
+              className="mt-1 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
+              style={{ backgroundColor: `${color}1A`, color }}
+            >
+              <Icon className="h-4 w-4" strokeWidth={2} />
+            </div>
+          )}
+          <div className="min-w-0 flex-1">
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground">
               {title}
             </h1>
             {description && (
-              <p className="mt-3 text-sm leading-relaxed text-slate-600 md:text-base">
+              <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
                 {description}
               </p>
             )}
           </div>
-
-          {Icon && (
-            <div
-              aria-hidden
-              className="hidden h-16 w-16 shrink-0 items-center justify-center rounded-2xl md:flex"
-              style={{ backgroundColor: `${color}1A`, color }}
-            >
-              <Icon className="h-8 w-8" strokeWidth={2} />
-            </div>
-          )}
         </div>
       </div>
     </section>

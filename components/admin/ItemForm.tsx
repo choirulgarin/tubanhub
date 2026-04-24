@@ -4,37 +4,45 @@ import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import {
-  Loader2,
-  Plus,
-  Trash2,
-  Save,
-  Send,
-  X,
-  AlertCircle,
-} from 'lucide-react';
+import { Loader2, Plus, Trash2, Save, Send, X } from 'lucide-react';
 import type { Category, Item, ItemMetadata, OpeningHours } from '@/types';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { FormSection } from '@/components/admin/FormSection';
 import { TagInput } from '@/components/admin/TagInput';
 import { ImagePreview } from '@/components/admin/ImagePreview';
 import { OpeningHoursInput } from '@/components/admin/OpeningHoursInput';
 import { MetadataFields } from '@/components/admin/MetadataFields';
 import { generateSlug } from '@/lib/utils/slug';
-import { cn } from '@/lib/utils';
 
 type Mode = 'create' | 'edit';
 
 type ItemFormProps = {
   mode: Mode;
   categories: Category[];
-  /** Untuk mode edit — data awal dari server. */
   initial?: Item | null;
-  /** URL aplikasi (APP_URL) untuk preview slug. */
   appUrl?: string;
 };
 
-// Shape state internal — sengaja flat supaya mudah di-bind ke form control.
 type FormState = {
   category_id: string;
   subcategory: string;
@@ -98,7 +106,9 @@ export function ItemForm({
   const router = useRouter();
   const [state, setState] = useState<FormState>(() => initialState(initial));
   const [error, setError] = useState<string | null>(null);
-  const [saving, setSaving] = useState<null | 'draft' | 'publish' | 'update'>(null);
+  const [saving, setSaving] = useState<null | 'draft' | 'publish' | 'update'>(
+    null,
+  );
   const [deleting, setDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
@@ -115,7 +125,6 @@ export function ItemForm({
     setState((s) => ({
       ...s,
       title,
-      // Auto-generate slug kalau user belum mengetuk field slug.
       slug: s.slugTouched ? s.slug : generateSlug(title),
     }));
   }
@@ -239,100 +248,102 @@ export function ItemForm({
     }
   }
 
-  const slugPreview = appUrl && activeCategory?.slug && state.slug
-    ? `${appUrl.replace(/\/$/, '')}/${activeCategory.slug}/${state.slug}`
-    : null;
+  const slugPreview =
+    appUrl && activeCategory?.slug && state.slug
+      ? `${appUrl.replace(/\/$/, '')}/${activeCategory.slug}/${state.slug}`
+      : null;
 
   return (
     <div className="space-y-6 pb-28">
       {error && (
-        <div
-          role="alert"
-          className="flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700"
-        >
-          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
-          <span>{error}</span>
-        </div>
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
       )}
 
-      {/* Informasi Utama */}
       <FormSection title="Informasi Utama">
         <TwoCol>
-          <Field label="Kategori" required>
-            <select
+          <Field id="category" label="Kategori" required>
+            <Select
               value={state.category_id}
-              onChange={(e) => patch('category_id', e.target.value)}
-              className={inputCls}
+              onValueChange={(v) => patch('category_id', v ?? '')}
             >
-              <option value="">— Pilih kategori —</option>
-              {categories.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger id="category">
+                <SelectValue placeholder="Pilih kategori" />
+              </SelectTrigger>
+              <SelectContent>
+                {categories.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </Field>
-          <Field label="Subcategory">
-            <input
-              type="text"
+          <Field id="subcategory" label="Subcategory">
+            <Input
+              id="subcategory"
               value={state.subcategory}
               onChange={(e) => patch('subcategory', e.target.value)}
               placeholder="Contoh: KTP, Wisata Alam…"
-              className={inputCls}
             />
           </Field>
         </TwoCol>
 
-        <Field label="Judul" required>
-          <input
-            type="text"
+        <Field id="title" label="Judul" required>
+          <Input
+            id="title"
             value={state.title}
             onChange={(e) => handleTitleChange(e.target.value)}
             placeholder="Nama layanan / destinasi"
-            className={inputCls}
           />
         </Field>
 
-        <Field label="Slug" required help="Otomatis diisi dari judul — edit jika perlu.">
-          <input
-            type="text"
+        <Field
+          id="slug"
+          label="Slug"
+          required
+          help="Otomatis diisi dari judul — edit jika perlu."
+        >
+          <Input
+            id="slug"
             value={state.slug}
             onChange={(e) => handleSlugChange(e.target.value)}
             placeholder="slug-url-friendly"
-            className={inputCls}
           />
           {slugPreview && (
-            <p className="mt-1.5 truncate text-xs text-slate-500">
+            <p className="mt-1.5 truncate text-xs text-muted-foreground">
               URL: <span className="font-mono">{slugPreview}</span>
             </p>
           )}
         </Field>
 
         <Field
+          id="description"
           label="Deskripsi"
           help={`${state.description.length} / 300 karakter`}
         >
-          <textarea
+          <Textarea
+            id="description"
             rows={3}
             maxLength={300}
             value={state.description}
             onChange={(e) => patch('description', e.target.value)}
             placeholder="Deskripsi singkat untuk card & hasil pencarian."
-            className={inputCls}
           />
         </Field>
 
-        <Field label="Konten / Panduan">
-          <textarea
+        <Field id="content" label="Konten / Panduan">
+          <Textarea
+            id="content"
             rows={10}
             value={state.content}
             onChange={(e) => patch('content', e.target.value)}
             placeholder="Penjelasan lengkap — minimal 10 baris. Dukung line-break biasa."
-            className={inputCls}
           />
         </Field>
 
-        <Field label="Tags" help="Ketik tag lalu tekan Enter.">
+        <Field id="tags" label="Tags" help="Ketik tag lalu tekan Enter.">
           <TagInput
             value={state.tags}
             onChange={(t) => patch('tags', t)}
@@ -341,103 +352,102 @@ export function ItemForm({
         </Field>
       </FormSection>
 
-      {/* Kontak */}
-      <FormSection title="Kontak" description="Kosongkan field yang tidak berlaku.">
+      <FormSection
+        title="Kontak"
+        description="Kosongkan field yang tidak berlaku."
+      >
         <TwoCol>
-          <Field label="Telepon">
-            <input
+          <Field id="phone" label="Telepon">
+            <Input
+              id="phone"
               type="tel"
               value={state.phone}
               onChange={(e) => patch('phone', e.target.value)}
               placeholder="+62…"
-              className={inputCls}
             />
           </Field>
-          <Field label="WhatsApp">
-            <input
+          <Field id="whatsapp" label="WhatsApp">
+            <Input
+              id="whatsapp"
               type="tel"
               value={state.whatsapp}
               onChange={(e) => patch('whatsapp', e.target.value)}
               placeholder="+62…"
-              className={inputCls}
             />
           </Field>
-          <Field label="Email">
-            <input
+          <Field id="email" label="Email">
+            <Input
+              id="email"
               type="email"
               value={state.email}
               onChange={(e) => patch('email', e.target.value)}
               placeholder="nama@contoh.com"
-              className={inputCls}
             />
           </Field>
-          <Field label="Website">
-            <input
+          <Field id="website" label="Website">
+            <Input
+              id="website"
               type="url"
               value={state.website}
               onChange={(e) => patch('website', e.target.value)}
               placeholder="https://…"
-              className={inputCls}
             />
           </Field>
         </TwoCol>
       </FormSection>
 
-      {/* Lokasi */}
       <FormSection title="Lokasi">
-        <Field label="Alamat">
-          <textarea
+        <Field id="address" label="Alamat">
+          <Textarea
+            id="address"
             rows={2}
             value={state.address}
             onChange={(e) => patch('address', e.target.value)}
             placeholder="Jalan, nomor, RT/RW, kelurahan…"
-            className={inputCls}
           />
         </Field>
         <TwoCol>
-          <Field label="Kecamatan">
-            <input
-              type="text"
+          <Field id="district" label="Kecamatan">
+            <Input
+              id="district"
               value={state.district}
               onChange={(e) => patch('district', e.target.value)}
-              className={inputCls}
             />
           </Field>
-          <Field label="Google Maps URL">
-            <input
+          <Field id="gmaps_url" label="Google Maps URL">
+            <Input
+              id="gmaps_url"
               type="url"
               value={state.gmaps_url}
               onChange={(e) => patch('gmaps_url', e.target.value)}
               placeholder="https://maps.google.com/…"
-              className={inputCls}
             />
           </Field>
         </TwoCol>
         <TwoCol>
-          <Field label="Latitude">
-            <input
+          <Field id="lat" label="Latitude">
+            <Input
+              id="lat"
               type="number"
               step="any"
               value={state.lat}
               onChange={(e) => patch('lat', e.target.value)}
               placeholder="-6.8970"
-              className={inputCls}
             />
           </Field>
-          <Field label="Longitude">
-            <input
+          <Field id="lng" label="Longitude">
+            <Input
+              id="lng"
               type="number"
               step="any"
               value={state.lng}
               onChange={(e) => patch('lng', e.target.value)}
               placeholder="111.9125"
-              className={inputCls}
             />
           </Field>
         </TwoCol>
       </FormSection>
 
-      {/* Jam operasional */}
       <FormSection
         title="Jam Operasional"
         description="Aktifkan hari yang relevan. Pilih '24 jam' atau atur rentang jam."
@@ -448,20 +458,19 @@ export function ItemForm({
         />
       </FormSection>
 
-      {/* Media */}
       <FormSection title="Media">
-        <Field label="Thumbnail URL">
-          <input
+        <Field id="thumbnail_url" label="Thumbnail URL">
+          <Input
+            id="thumbnail_url"
             type="url"
             value={state.thumbnail_url}
             onChange={(e) => patch('thumbnail_url', e.target.value)}
             placeholder="https://…"
-            className={inputCls}
           />
         </Field>
         <ImagePreview src={state.thumbnail_url} alt="Preview thumbnail" />
 
-        <Field label="Gambar Tambahan">
+        <Field id="images" label="Gambar Tambahan">
           <ImageListInput
             value={state.images}
             onChange={(imgs) => patch('images', imgs)}
@@ -469,7 +478,6 @@ export function ItemForm({
         </Field>
       </FormSection>
 
-      {/* Metadata dinamis */}
       <FormSection
         title="Metadata Khusus Kategori"
         description="Field otomatis menyesuaikan kategori yang dipilih."
@@ -481,154 +489,158 @@ export function ItemForm({
         />
       </FormSection>
 
-      {/* Pengaturan */}
       <FormSection title="Pengaturan">
-        <div className="space-y-2">
-          <Toggle
-            label="Publikasikan item ini"
-            description="Saat aktif, item akan muncul di website publik."
-            checked={state.is_published}
-            onChange={(v) => patch('is_published', v)}
-          />
-          <Toggle
-            label="Tandai sebagai terverifikasi"
-            description="Tampilkan badge 'Terverifikasi' pada card & halaman detail."
-            checked={state.is_verified}
-            onChange={(v) => patch('is_verified', v)}
-          />
-        </div>
+        <SwitchRow
+          label="Publikasikan item ini"
+          description="Saat aktif, item akan muncul di website publik."
+          checked={state.is_published}
+          onChange={(v) => patch('is_published', v)}
+        />
+        <SwitchRow
+          label="Tandai sebagai terverifikasi"
+          description="Tampilkan badge 'Terverifikasi' pada card & halaman detail."
+          checked={state.is_verified}
+          onChange={(v) => patch('is_verified', v)}
+        />
       </FormSection>
 
       {mode === 'edit' && (
-        <div className="rounded-2xl border border-red-200 bg-red-50/50 p-5">
-          <h3 className="text-sm font-semibold text-red-800">Zona Berbahaya</h3>
-          <p className="mt-1 text-xs text-red-700">
+        <div className="rounded-xl border border-destructive/30 bg-card p-5">
+          <h3 className="text-sm font-medium text-destructive">
+            Zona Berbahaya
+          </h3>
+          <p className="mt-1 text-xs text-muted-foreground">
             Menghapus item akan menghilangkannya secara permanen dari sistem.
           </p>
-          <button
+          <Button
             type="button"
+            size="sm"
+            variant="outline"
             onClick={() => setShowDeleteConfirm(true)}
-            className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-red-300 bg-white px-3 py-2 text-sm font-medium text-red-700 transition hover:bg-red-100"
+            className="mt-3 text-destructive hover:text-destructive"
           >
             <Trash2 className="h-4 w-4" aria-hidden />
             Hapus Item
-          </button>
+          </Button>
         </div>
       )}
 
-      {/* Action bar sticky */}
-      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-slate-200 bg-white/95 px-4 py-3 backdrop-blur md:left-60">
+      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-background/95 px-4 py-3 backdrop-blur md:left-[220px]">
         <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-end gap-2">
-          <Link
-            href="/admin/items"
-            className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
-          >
-            Batal
-          </Link>
+          <Button asChild variant="outline" size="sm">
+            <Link href="/admin/items">Batal</Link>
+          </Button>
           {mode === 'create' ? (
             <>
-              <ActionButton
-                icon={Save}
-                label="Simpan Draft"
+              <Button
+                type="button"
+                size="sm"
                 variant="outline"
-                loading={saving === 'draft'}
                 disabled={saving !== null}
                 onClick={() => handleSubmit('draft')}
-              />
-              <ActionButton
-                icon={Send}
-                label="Simpan & Publikasikan"
-                loading={saving === 'publish'}
+              >
+                {saving === 'draft' ? (
+                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                ) : (
+                  <Save className="h-4 w-4" aria-hidden />
+                )}
+                Simpan Draft
+              </Button>
+              <Button
+                type="button"
+                size="sm"
                 disabled={saving !== null}
                 onClick={() => handleSubmit('publish')}
-              />
+              >
+                {saving === 'publish' ? (
+                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                ) : (
+                  <Send className="h-4 w-4" aria-hidden />
+                )}
+                Simpan & Publikasikan
+              </Button>
             </>
           ) : (
-            <ActionButton
-              icon={Save}
-              label="Simpan Perubahan"
-              loading={saving === 'update'}
+            <Button
+              type="button"
+              size="sm"
               disabled={saving !== null}
               onClick={() => handleSubmit('update')}
-            />
+            >
+              {saving === 'update' ? (
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+              ) : (
+                <Save className="h-4 w-4" aria-hidden />
+              )}
+              Simpan Perubahan
+            </Button>
           )}
         </div>
       </div>
 
-      {/* Dialog konfirmasi hapus */}
-      {showDeleteConfirm && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          className="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/50 p-4"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setShowDeleteConfirm(false);
-          }}
-        >
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
-            <h3 className="text-lg font-semibold text-slate-900">
-              Hapus item ini?
-            </h3>
-            <p className="mt-1 text-sm text-slate-600">
+      <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Hapus item ini?</DialogTitle>
+            <DialogDescription>
               Tindakan ini tidak dapat dibatalkan.{' '}
-              <span className="font-medium">{initial?.title}</span> akan dihapus
-              permanen dari database.
-            </p>
-            <div className="mt-5 flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setShowDeleteConfirm(false)}
-                disabled={deleting}
-                className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
-              >
-                Batal
-              </button>
-              <button
-                type="button"
-                onClick={handleDelete}
-                disabled={deleting}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50"
-              >
-                {deleting ? (
-                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-                ) : (
-                  <Trash2 className="h-4 w-4" aria-hidden />
-                )}
-                Hapus
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+              <span className="font-medium text-foreground">
+                {initial?.title}
+              </span>{' '}
+              akan dihapus permanen dari database.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowDeleteConfirm(false)}
+              disabled={deleting}
+            >
+              Batal
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={deleting}
+            >
+              {deleting ? (
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+              ) : (
+                <Trash2 className="h-4 w-4" aria-hidden />
+              )}
+              Hapus
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
 
-// ------- subcomponents -------
-
-const inputCls =
-  'w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30';
-
 function Field({
+  id,
   label,
   required,
   help,
   children,
 }: {
+  id?: string;
   label: string;
   required?: boolean;
   help?: string;
   children: React.ReactNode;
 }) {
   return (
-    <label className="block">
-      <span className="mb-1.5 block text-xs font-medium text-slate-600">
+    <div className="space-y-1.5">
+      <Label htmlFor={id}>
         {label}
-        {required && <span className="ml-0.5 text-red-500">*</span>}
-      </span>
+        {required && <span className="ml-0.5 text-destructive">*</span>}
+      </Label>
       {children}
-      {help && <p className="mt-1.5 text-xs text-slate-500">{help}</p>}
-    </label>
+      {help && <p className="text-xs text-muted-foreground">{help}</p>}
+    </div>
   );
 }
 
@@ -636,7 +648,7 @@ function TwoCol({ children }: { children: React.ReactNode }) {
   return <div className="grid gap-4 md:grid-cols-2">{children}</div>;
 }
 
-function Toggle({
+function SwitchRow({
   label,
   description,
   checked,
@@ -648,57 +660,18 @@ function Toggle({
   onChange: (v: boolean) => void;
 }) {
   return (
-    <label className="flex items-start gap-3 rounded-lg border border-slate-100 bg-slate-50/60 p-3 hover:bg-slate-50">
-      <input
-        type="checkbox"
-        checked={checked}
-        onChange={(e) => onChange(e.target.checked)}
-        className="mt-0.5 h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary"
-      />
-      <span className="text-sm">
-        <span className="block font-medium text-slate-800">{label}</span>
+    <div className="flex items-start justify-between gap-4 rounded-lg border border-border p-3">
+      <div className="space-y-0.5">
+        <p className="text-sm font-medium text-foreground">{label}</p>
         {description && (
-          <span className="block text-xs text-slate-500">{description}</span>
+          <p className="text-xs text-muted-foreground">{description}</p>
         )}
-      </span>
-    </label>
+      </div>
+      <Switch checked={checked} onCheckedChange={onChange} />
+    </div>
   );
 }
 
-function ActionButton({
-  icon: Icon,
-  label,
-  onClick,
-  loading,
-  disabled,
-  variant = 'primary',
-}: {
-  icon: typeof Save;
-  label: string;
-  onClick: () => void;
-  loading?: boolean;
-  disabled?: boolean;
-  variant?: 'primary' | 'outline';
-}) {
-  return (
-    <Button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      variant={variant === 'outline' ? 'outline' : 'default'}
-      className="gap-1.5"
-    >
-      {loading ? (
-        <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-      ) : (
-        <Icon className="h-4 w-4" aria-hidden />
-      )}
-      {label}
-    </Button>
-  );
-}
-
-// Input list gambar — tambah/hapus URL.
 function ImageListInput({
   value,
   onChange,
@@ -721,41 +694,38 @@ function ImageListInput({
   return (
     <div className="space-y-2">
       {value.length === 0 && (
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-muted-foreground">
           Belum ada gambar tambahan. Klik{' '}
-          <span className="font-semibold">Tambah URL</span> untuk menambah.
+          <span className="font-medium text-foreground">Tambah URL</span> untuk
+          menambah.
         </p>
       )}
       {value.map((url, idx) => (
-        <div key={idx} className={cn('flex items-start gap-2')}>
+        <div key={idx} className="flex items-start gap-2">
           <div className="flex-1 space-y-2">
-            <input
+            <Input
               type="url"
               value={url}
               onChange={(e) => updateAt(idx, e.target.value)}
               placeholder="https://…"
-              className={inputCls}
             />
             {url && <ImagePreview src={url} ratio="16/9" />}
           </div>
-          <button
+          <Button
             type="button"
+            size="icon"
+            variant="outline"
             onClick={() => removeAt(idx)}
             aria-label="Hapus URL"
-            className="mt-1 rounded-lg border border-slate-200 bg-white p-2 text-slate-500 hover:text-red-600"
           >
             <X className="h-4 w-4" aria-hidden />
-          </button>
+          </Button>
         </div>
       ))}
-      <button
-        type="button"
-        onClick={add}
-        className="inline-flex items-center gap-1.5 rounded-lg border border-dashed border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:border-primary hover:text-primary"
-      >
+      <Button type="button" size="sm" variant="outline" onClick={add}>
         <Plus className="h-4 w-4" aria-hidden />
         Tambah URL
-      </button>
+      </Button>
     </div>
   );
 }

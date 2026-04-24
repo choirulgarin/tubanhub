@@ -1,10 +1,21 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { Inbox, PlusCircle, MapPin } from 'lucide-react';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { getCategories } from '@/lib/queries';
 import { ItemsFilterBar } from '@/components/admin/ItemsFilterBar';
 import { ItemRowActions } from '@/components/admin/ItemRowActions';
 import { formatDate, formatNumber } from '@/lib/utils/format';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { cn } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
@@ -35,7 +46,10 @@ type AdminItemRow = {
 
 async function loadItems(params: PageProps['searchParams']) {
   const q = params.q?.trim() ?? '';
-  const status = params.status === 'published' || params.status === 'draft' ? params.status : null;
+  const status =
+    params.status === 'published' || params.status === 'draft'
+      ? params.status
+      : null;
   const categorySlug = params.category ?? '';
   const page = Math.max(1, Number(params.page ?? '1') || 1);
 
@@ -43,7 +57,6 @@ async function loadItems(params: PageProps['searchParams']) {
   const from = (page - 1) * PAGE_SIZE;
   const to = from + PAGE_SIZE - 1;
 
-  // Base SELECT. Saat ada filter kategori, pakai !inner join agar filter benar-benar membatasi.
   const baseCols =
     'id, title, slug, subcategory, is_published, is_verified, view_count, thumbnail_url, updated_at';
 
@@ -75,7 +88,6 @@ async function loadItems(params: PageProps['searchParams']) {
     return { rows: [] as AdminItemRow[], total: 0, page };
   }
 
-  // Normalisasi kategori (kadang object, kadang array).
   const rows: AdminItemRow[] = ((data ?? []) as unknown as Array<
     Omit<AdminItemRow, 'category'> & {
       category:
@@ -103,59 +115,58 @@ export default async function AdminItemsPage({ searchParams }: PageProps) {
     <div className="space-y-6">
       <header className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 md:text-3xl">
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
             Kelola Item
           </h1>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-sm text-muted-foreground">
             {formatNumber(total)} item total — kelola, publikasi, dan hapus.
           </p>
         </div>
-        <Link
-          href="/admin/items/new"
-          className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary-dark"
-        >
-          <PlusCircle className="h-4 w-4" aria-hidden />
-          Tambah Item Baru
-        </Link>
+        <Button asChild size="sm">
+          <Link href="/admin/items/new">
+            <PlusCircle className="h-4 w-4" aria-hidden />
+            Tambah Item Baru
+          </Link>
+        </Button>
       </header>
 
       <ItemsFilterBar categories={categories} />
 
       {rows.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-white px-6 py-16 text-center">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary">
-            <Inbox className="h-6 w-6" aria-hidden />
-          </div>
-          <h3 className="mt-4 text-base font-semibold text-slate-900">
+        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-card px-6 py-16 text-center">
+          <Inbox
+            className="h-8 w-8 text-muted-foreground"
+            strokeWidth={1.5}
+            aria-hidden
+          />
+          <h3 className="mt-3 text-sm font-medium text-foreground">
             Tidak ada item yang cocok
           </h3>
-          <p className="mt-1 max-w-sm text-sm text-slate-500">
+          <p className="mt-1 max-w-sm text-xs text-muted-foreground">
             Coba longgarkan filter atau tambah item baru untuk mulai mengisi
             konten TubanHub.
           </p>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="border-b border-slate-100 text-xs uppercase tracking-wide text-slate-500">
-                <tr>
-                  <th className="px-4 py-2.5 font-medium">Item</th>
-                  <th className="px-4 py-2.5 font-medium">Kategori</th>
-                  <th className="px-4 py-2.5 font-medium">Sub</th>
-                  <th className="px-4 py-2.5 font-medium">Status</th>
-                  <th className="px-4 py-2.5 font-medium text-right">Views</th>
-                  <th className="px-4 py-2.5 font-medium">Update</th>
-                  <th className="px-4 py-2.5" />
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {rows.map((row) => (
-                  <AdminItemRowView key={row.id} row={row} />
-                ))}
-              </tbody>
-            </table>
-          </div>
+        <div className="overflow-hidden rounded-xl border border-border bg-card">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Item</TableHead>
+                <TableHead>Kategori</TableHead>
+                <TableHead>Sub</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Views</TableHead>
+                <TableHead>Update</TableHead>
+                <TableHead className="w-[80px]" />
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {rows.map((row) => (
+                <AdminItemRowView key={row.id} row={row} />
+              ))}
+            </TableBody>
+          </Table>
         </div>
       )}
 
@@ -171,69 +182,67 @@ export default async function AdminItemsPage({ searchParams }: PageProps) {
 }
 
 function AdminItemRowView({ row }: { row: AdminItemRow }) {
-  const color = row.category?.color ?? '#2563EB';
   return (
-    <tr className="hover:bg-slate-50/60">
-      <td className="px-4 py-3">
+    <TableRow>
+      <TableCell>
         <div className="flex items-center gap-3">
           {row.thumbnail_url ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={row.thumbnail_url}
-              alt=""
-              className="h-10 w-10 shrink-0 rounded-lg object-cover"
-              loading="lazy"
-            />
+            <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-md bg-muted">
+              <Image
+                src={row.thumbnail_url}
+                alt=""
+                fill
+                sizes="40px"
+                className="object-cover"
+              />
+            </div>
           ) : (
             <div
               aria-hidden
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg"
-              style={{
-                backgroundImage: `linear-gradient(135deg, ${color}33, ${color}14)`,
-              }}
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground"
             >
-              <MapPin className="h-4 w-4" style={{ color }} aria-hidden />
+              <MapPin className="h-4 w-4" strokeWidth={1.5} />
             </div>
           )}
           <div className="min-w-0">
-            <p className="truncate text-sm font-medium text-slate-900">
+            <p className="truncate text-sm font-medium text-foreground">
               {row.title}
             </p>
-            <p className="truncate text-xs text-slate-500">{row.slug}</p>
+            <p className="truncate text-xs text-muted-foreground">{row.slug}</p>
           </div>
         </div>
-      </td>
-      <td className="px-4 py-3 text-slate-700">
+      </TableCell>
+      <TableCell className="text-muted-foreground">
         {row.category?.name ?? '—'}
-      </td>
-      <td className="px-4 py-3 text-slate-500">{row.subcategory ?? '—'}</td>
-      <td className="px-4 py-3">
-        <StatusPill published={row.is_published} />
-      </td>
-      <td className="px-4 py-3 text-right text-slate-700">
+      </TableCell>
+      <TableCell className="text-muted-foreground">
+        {row.subcategory ?? '—'}
+      </TableCell>
+      <TableCell>
+        <StatusBadge published={row.is_published} />
+      </TableCell>
+      <TableCell className="text-right text-muted-foreground">
         {formatNumber(row.view_count ?? 0)}
-      </td>
-      <td className="px-4 py-3 text-slate-600">{formatDate(row.updated_at)}</td>
-      <td className="px-4 py-3">
+      </TableCell>
+      <TableCell className="text-muted-foreground">
+        {formatDate(row.updated_at)}
+      </TableCell>
+      <TableCell>
         <ItemRowActions
           id={row.id}
           title={row.title}
           isPublished={row.is_published}
         />
-      </td>
-    </tr>
+      </TableCell>
+    </TableRow>
   );
 }
 
-function StatusPill({ published }: { published: boolean }) {
+function StatusBadge({ published }: { published: boolean }) {
   return published ? (
-    <span className="inline-flex items-center rounded-full bg-secondary/10 px-2 py-0.5 text-xs font-medium text-secondary">
-      Published
-    </span>
+    <Badge variant="secondary">Published</Badge>
   ) : (
-    <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
-      Draft
-    </span>
+    <Badge variant="outline">Draft</Badge>
   );
 }
 
@@ -256,36 +265,36 @@ function Pagination({
     return qs ? `/admin/items?${qs}` : '/admin/items';
   }
 
-  // Render ringkas: prev, page X dari Y, next.
   return (
     <nav
       aria-label="Pagination"
-      className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm shadow-card"
+      className="flex items-center justify-between rounded-xl border border-border bg-card px-4 py-3 text-sm"
     >
       <Link
         href={hrefFor(Math.max(1, page - 1))}
         aria-disabled={page === 1}
         className={cn(
-          'rounded-lg border border-slate-200 px-3 py-1.5 font-medium',
+          'rounded-md border border-border px-3 py-1.5 text-xs font-medium',
           page === 1
-            ? 'pointer-events-none text-slate-300'
-            : 'text-slate-700 hover:bg-slate-50',
+            ? 'pointer-events-none text-muted-foreground/40'
+            : 'text-foreground hover:bg-muted',
         )}
       >
         ← Sebelumnya
       </Link>
-      <span className="text-slate-600">
-        Halaman <span className="font-semibold text-slate-900">{page}</span> dari{' '}
-        <span className="font-semibold text-slate-900">{totalPages}</span>
+      <span className="text-xs text-muted-foreground">
+        Halaman{' '}
+        <span className="font-medium text-foreground">{page}</span> dari{' '}
+        <span className="font-medium text-foreground">{totalPages}</span>
       </span>
       <Link
         href={hrefFor(Math.min(totalPages, page + 1))}
         aria-disabled={page === totalPages}
         className={cn(
-          'rounded-lg border border-slate-200 px-3 py-1.5 font-medium',
+          'rounded-md border border-border px-3 py-1.5 text-xs font-medium',
           page === totalPages
-            ? 'pointer-events-none text-slate-300'
-            : 'text-slate-700 hover:bg-slate-50',
+            ? 'pointer-events-none text-muted-foreground/40'
+            : 'text-foreground hover:bg-muted',
         )}
       >
         Selanjutnya →
@@ -293,4 +302,3 @@ function Pagination({
     </nav>
   );
 }
-

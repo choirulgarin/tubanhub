@@ -28,6 +28,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'yearly',
       priority: 0.4,
     },
+    {
+      url: `${APP_URL}/pengumuman`,
+      lastModified: new Date(),
+      changeFrequency: 'daily',
+      priority: 0.7,
+    },
+    {
+      url: `${APP_URL}/pemerintah`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.7,
+    },
+    {
+      url: `${APP_URL}/pasang-iklan`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.5,
+    },
   ];
 
   const supabase = createAdminClient();
@@ -76,5 +94,29 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })
     .filter((e): e is NonNullable<typeof e> => e !== null);
 
-  return [...staticEntries, ...categoryEntries, ...itemEntries];
+  // Pengumuman aktif (published & belum expired).
+  const nowIso = new Date().toISOString();
+  const { data: announcements } = await supabase
+    .from('announcements')
+    .select('id, updated_at, expires_at')
+    .eq('is_published', true);
+
+  const announcementEntries: MetadataRoute.Sitemap = (announcements ?? [])
+    .filter(
+      (a: { expires_at: string | null }) =>
+        !a.expires_at || a.expires_at > nowIso,
+    )
+    .map((a: { id: string; updated_at: string }) => ({
+      url: `${APP_URL}/pengumuman/${a.id}`,
+      lastModified: new Date(a.updated_at),
+      changeFrequency: 'weekly' as const,
+      priority: 0.5,
+    }));
+
+  return [
+    ...staticEntries,
+    ...categoryEntries,
+    ...itemEntries,
+    ...announcementEntries,
+  ];
 }

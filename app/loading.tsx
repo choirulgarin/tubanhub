@@ -11,7 +11,7 @@ export default function RootLoading() {
       <div className="animate-pulse">
         <Logo href={null} />
       </div>
-      <span className="text-sm text-slate-500">Memuat…</span>
+      <span className="text-sm text-muted-foreground">Memuat…</span>
     </div>
   );
 }

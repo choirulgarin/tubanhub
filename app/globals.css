@@ -3,84 +3,68 @@
 @tailwind utilities;
 
 /* ============================================================================
-   CSS Variables TubanHub
+   TubanHub Design Tokens
    ============================================================================
-   Dua jenis variabel berdampingan:
-   - HSL variables (shadcn): `hsl(var(--background))` — dipakai komponen shadcn.
-   - Hex variables (TubanHub): `var(--primary)` — dipakai CSS kustom / utility
-     TubanHub. Keduanya merujuk palet yang sama supaya konsisten.
+   Hybrid approach:
+   - Token HSL netral (shadcn): background/foreground/muted/card/border/input/ring
+     → dipakai komponen shadcn + utility netral (bg-background, text-foreground).
+   - Brand colors hex (TubanHub): primary/secondary/accent/purple
+     → dipakai untuk warna kategori dan CTA brand (via Tailwind config).
    ============================================================================ */
 @layer base {
   :root {
-    /* --- Palet brand TubanHub (hex) --- */
-    --primary: #2563EB;
-    --primary-dark: #1D4ED8;
-    --primary-light: #DBEAFE;
-
-    --secondary: #16A34A;
-    --secondary-dark: #15803D;
-    --secondary-light: #DCFCE7;
-
-    --accent: #EA580C;
-    --accent-light: #FFEDD5;
-
-    --purple: #7C3AED;
-    --purple-light: #EDE9FE;
-
-    /* --- Teks & background netral --- */
-    --text-primary: #0F172A;
-    --text-secondary: #475569;
-    --text-muted: #94A3B8;
-    --bg-base: #F8FAFC;
-    --bg-card: #FFFFFF;
-    --border: #E2E8F0;
-    --radius: 12px;
-
-    /* --- Token shadcn (HSL, diperlukan oleh komponen shadcn) --- */
-    --background: 210 40% 98%;                /* = #F8FAFC */
-    --foreground: 222.2 84% 4.9%;             /* = #0F172A */
-
-    --card: 0 0% 100%;                        /* = #FFFFFF */
-    --card-foreground: 222.2 84% 4.9%;
-
+    /* --- shadcn HSL tokens (geist-minimalist neutral) --- */
+    --background: 0 0% 100%;
+    --foreground: 240 10% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-
+    --popover-foreground: 240 10% 3.9%;
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
+    --accent: 240 4.8% 95.9%;
+    --accent-foreground: 240 5.9% 10%;
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+    --ring: 221 83% 53%;
+    --radius: 0.625rem;
 
-    --input: 214.3 31.8% 91.4%;               /* = #E2E8F0 */
-    --ring: 221.2 83.2% 53.3%;                /* biru primary */
+    /* --- Brand colors TubanHub (hex, dipakai di Tailwind config) --- */
+    --brand-blue: #2563EB;
+    --brand-green: #16A34A;
+    --brand-orange: #EA580C;
+    --brand-purple: #7C3AED;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 48%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 221 83% 53%;
   }
 
   * {
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
   html {
@@ -89,37 +73,17 @@
 }
 
 /* ============================================================================
-   Utility classes TubanHub
+   Utilities
    ============================================================================ */
 @layer components {
+  /* Container responsif konsisten (pengganti `container-app` lama). */
   .container-app {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 1rem;
+    @apply mx-auto w-full max-w-6xl px-4;
   }
 
+  /* Spacing section vertikal default. */
   .section {
-    padding: 3rem 0;
-  }
-
-  .card-hover {
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-  }
-  .card-hover:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-  }
-
-  .gradient-primary {
-    background: linear-gradient(135deg, #2563EB 0%, #16A34A 100%);
-  }
-
-  .text-gradient {
-    background: linear-gradient(135deg, #2563EB, #16A34A);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    color: transparent;
+    @apply py-12 md:py-16;
   }
 }
 
@@ -127,14 +91,12 @@
   .text-balance {
     text-wrap: balance;
   }
-
   .line-clamp-2 {
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
-
   .line-clamp-3 {
     display: -webkit-box;
     -webkit-line-clamp: 3;

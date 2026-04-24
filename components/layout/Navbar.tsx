@@ -1,17 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-import {
-  Building2,
-  MapPin,
-  Menu,
-  Search,
-  Home,
-  Info,
-  MessageSquarePlus,
-} from 'lucide-react';
+import { Menu, Search } from 'lucide-react';
 import {
   Sheet,
   SheetContent,
@@ -22,21 +14,25 @@ import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/layout/Logo';
 import { cn } from '@/lib/utils';
 
-// Konfigurasi nav link — dipakai baik untuk desktop maupun mobile sheet.
+// Nav utama — ringkas untuk desktop.
 const NAV_LINKS = [
-  { href: '/',          label: 'Beranda',   icon: Home },
-  { href: '/birokrasi', label: 'Birokrasi', icon: Building2 },
-  { href: '/wisata',    label: 'Wisata',    icon: MapPin },
+  { href: '/', label: 'Beranda' },
+  { href: '/birokrasi', label: 'Birokrasi' },
+  { href: '/wisata', label: 'Wisata' },
+  { href: '/kuliner', label: 'Kuliner' },
+  { href: '/jasa', label: 'Jasa' },
 ] as const;
 
-// Link sekunder — hanya tampil di mobile sheet untuk menjaga desktop nav tetap ringkas.
+// Link sekunder — hanya tampil di mobile sheet.
 const SECONDARY_LINKS = [
-  { href: '/tentang', label: 'Tentang',        icon: Info },
-  { href: '/usul',    label: 'Usulkan Tempat', icon: MessageSquarePlus },
+  { href: '/pengumuman', label: 'Pengumuman' },
+  { href: '/pemerintah', label: 'Pemerintah Tuban' },
+  { href: '/tentang', label: 'Tentang' },
+  { href: '/usul', label: 'Usulkan Tempat' },
+  { href: '/pasang-iklan', label: 'Pasang Iklan' },
+  { href: '/kontak', label: 'Hubungi Kami' },
 ] as const;
 
-// Cek apakah sebuah path match dengan pathname saat ini.
-// "/" hanya match persis; selain itu match jika pathname-nya sama atau diawali prefix + "/".
 function isActive(href: string, pathname: string) {
   if (href === '/') return pathname === '/';
   return pathname === href || pathname.startsWith(href + '/');
@@ -45,53 +41,35 @@ function isActive(href: string, pathname: string) {
 export function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
-  const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  // Tambah subtle shadow saat user scroll ke bawah.
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 8);
-    onScroll();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
-
-  // Sembunyikan navbar di area admin — admin punya layout & sidebar sendiri.
+  // Sembunyikan navbar di area admin.
   if (pathname?.startsWith('/admin')) return null;
 
   return (
-    <header
-      className={cn(
-        'sticky top-0 z-50 w-full border-b border-border/80 bg-white/95 backdrop-blur transition-shadow',
-        scrolled && 'shadow-sm',
-      )}
-    >
-      <div className="container-app flex h-16 items-center justify-between gap-4">
+    <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur-sm supports-[backdrop-filter]:bg-background/80">
+      <div className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between gap-4 px-4">
         <Logo />
 
         {/* Desktop nav */}
-        <nav aria-label="Navigasi utama" className="hidden md:flex items-center gap-1">
-          {NAV_LINKS.map(({ href, label, icon: Icon }) => {
+        <nav
+          aria-label="Navigasi utama"
+          className="hidden items-center gap-1 md:flex"
+        >
+          {NAV_LINKS.map(({ href, label }) => {
             const active = isActive(href, pathname ?? '/');
             return (
               <Link
                 key={href}
                 href={href}
                 className={cn(
-                  'relative inline-flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                  'rounded-md px-3 py-1.5 text-sm transition-colors',
                   active
-                    ? 'text-primary'
-                    : 'text-slate-600 hover:text-primary hover:bg-primary-light/50',
+                    ? 'font-medium text-foreground'
+                    : 'text-muted-foreground hover:text-foreground',
                 )}
               >
-                <Icon className="h-4 w-4" aria-hidden />
                 {label}
-                {active && (
-                  <span
-                    aria-hidden
-                    className="absolute inset-x-3 -bottom-[1px] h-0.5 rounded-full bg-primary"
-                  />
-                )}
               </Link>
             );
           })}
@@ -101,36 +79,38 @@ export function Navbar() {
         <div className="flex items-center gap-1">
           <Button
             variant="ghost"
-            size="icon"
+            size="icon-sm"
             aria-label="Cari"
             onClick={() => router.push('/search')}
-            className="text-slate-600 hover:text-primary"
+            className="text-muted-foreground hover:text-foreground"
           >
-            <Search className="h-5 w-5" />
+            <Search />
           </Button>
 
           {/* Mobile hamburger */}
           <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-            {/* base-ui pakai prop `render` (bukan `asChild` ala Radix). */}
             <SheetTrigger
               render={
                 <Button
                   variant="ghost"
-                  size="icon"
+                  size="icon-sm"
                   aria-label="Buka menu"
-                  className="md:hidden text-slate-600"
+                  className="text-muted-foreground hover:text-foreground md:hidden"
                 >
-                  <Menu className="h-5 w-5" />
+                  <Menu />
                 </Button>
               }
             />
             <SheetContent side="right" className="w-72">
               <SheetTitle className="sr-only">Menu navigasi</SheetTitle>
-              <div className="flex flex-col gap-6">
+              <div className="flex flex-col gap-6 pt-2">
                 <Logo />
 
-                <nav aria-label="Navigasi mobile" className="flex flex-col gap-1">
-                  {NAV_LINKS.map(({ href, label, icon: Icon }) => {
+                <nav
+                  aria-label="Navigasi mobile"
+                  className="flex flex-col gap-0.5"
+                >
+                  {NAV_LINKS.map(({ href, label }) => {
                     const active = isActive(href, pathname ?? '/');
                     return (
                       <Link
@@ -138,21 +118,20 @@ export function Navbar() {
                         href={href}
                         onClick={() => setMobileOpen(false)}
                         className={cn(
-                          'inline-flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-colors',
+                          'rounded-md px-3 py-2 text-sm transition-colors',
                           active
-                            ? 'bg-primary-light text-primary'
-                            : 'text-slate-700 hover:bg-slate-100',
+                            ? 'bg-muted font-medium text-foreground'
+                            : 'text-muted-foreground hover:bg-muted hover:text-foreground',
                         )}
                       >
-                        <Icon className="h-5 w-5" aria-hidden />
                         {label}
                       </Link>
                     );
                   })}
 
-                  <hr className="my-2 border-slate-200" />
+                  <div className="my-3 h-px bg-border" />
 
-                  {SECONDARY_LINKS.map(({ href, label, icon: Icon }) => {
+                  {SECONDARY_LINKS.map(({ href, label }) => {
                     const active = isActive(href, pathname ?? '/');
                     return (
                       <Link
@@ -160,13 +139,12 @@ export function Navbar() {
                         href={href}
                         onClick={() => setMobileOpen(false)}
                         className={cn(
-                          'inline-flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-colors',
+                          'rounded-md px-3 py-2 text-sm transition-colors',
                           active
-                            ? 'bg-primary-light text-primary'
-                            : 'text-slate-600 hover:bg-slate-100',
+                            ? 'bg-muted font-medium text-foreground'
+                            : 'text-muted-foreground hover:bg-muted hover:text-foreground',
                         )}
                       >
-                        <Icon className="h-5 w-5" aria-hidden />
                         {label}
                       </Link>
                     );

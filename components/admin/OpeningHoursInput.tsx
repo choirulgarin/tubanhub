@@ -81,26 +81,26 @@ export function OpeningHoursInput({
         return (
           <div
             key={day.key}
-            className="flex flex-wrap items-center gap-3 rounded-lg border border-slate-200 bg-white p-3"
+            className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-background p-3"
           >
-            <label className="flex w-32 items-center gap-2 text-sm font-medium text-slate-800">
+            <label className="flex w-32 items-center gap-2 text-sm font-medium text-foreground">
               <input
                 type="checkbox"
                 checked={state.active}
                 onChange={(e) => updateDay(day.key, { active: e.target.checked })}
-                className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary"
+                className="h-4 w-4 rounded border-border text-primary focus:ring-ring"
               />
               {day.label}
             </label>
 
             {state.active && (
               <>
-                <label className="inline-flex items-center gap-1.5 text-xs text-slate-600">
+                <label className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
                   <input
                     type="checkbox"
                     checked={state.open24}
                     onChange={(e) => updateDay(day.key, { open24: e.target.checked })}
-                    className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary"
+                    className="h-4 w-4 rounded border-border text-primary focus:ring-ring"
                   />
                   24 jam
                 </label>
@@ -111,14 +111,14 @@ export function OpeningHoursInput({
                       type="time"
                       value={state.start}
                       onChange={(e) => updateDay(day.key, { start: e.target.value })}
-                      className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
+                      className="rounded-md border border-input bg-background px-2 py-1 text-sm focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/30"
                     />
-                    <span className="text-slate-400">–</span>
+                    <span className="text-muted-foreground">–</span>
                     <input
                       type="time"
                       value={state.end}
                       onChange={(e) => updateDay(day.key, { end: e.target.value })}
-                      className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
+                      className="rounded-md border border-input bg-background px-2 py-1 text-sm focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/30"
                     />
                   </div>
                 )}

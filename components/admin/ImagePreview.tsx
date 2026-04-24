@@ -35,7 +35,7 @@ export function ImagePreview({
     return (
       <div
         className={cn(
-          'flex w-full items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50 text-xs text-slate-400',
+          'flex w-full items-center justify-center rounded-lg border border-dashed border-border bg-muted/30 text-xs text-muted-foreground',
           ratioClass,
           className,
         )}
@@ -48,18 +48,18 @@ export function ImagePreview({
   return (
     <div
       className={cn(
-        'relative w-full overflow-hidden rounded-xl bg-slate-100',
+        'relative w-full overflow-hidden rounded-lg bg-muted',
         ratioClass,
         className,
       )}
     >
       {status === 'loading' && (
         <div className="absolute inset-0 flex items-center justify-center">
-          <Loader2 className="h-5 w-5 animate-spin text-slate-400" aria-hidden />
+          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" aria-hidden />
         </div>
       )}
       {status === 'error' ? (
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 text-xs text-slate-400">
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 text-xs text-muted-foreground">
           <ImageOff className="h-6 w-6" aria-hidden />
           Gambar gagal dimuat
         </div>

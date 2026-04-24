@@ -72,14 +72,14 @@ export function InstallPrompt() {
     <div
       role="dialog"
       aria-label="Install TubanHub"
-      className="fixed inset-x-4 bottom-4 z-50 mx-auto max-w-md rounded-2xl border bg-white p-4 shadow-lg md:left-auto md:right-4 md:mx-0"
+      className="fixed inset-x-4 bottom-4 z-50 mx-auto max-w-md rounded-xl border border-border bg-card p-4 md:left-auto md:right-4 md:mx-0"
     >
       <div className="flex items-start gap-3">
         <div
           aria-hidden
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#2563EB] to-[#16A34A] text-white"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground"
         >
-          <span className="text-lg font-bold">T</span>
+          <span className="text-lg font-semibold">T</span>
         </div>
 
         <div className="flex-1 min-w-0">
