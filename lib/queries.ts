@@ -5,9 +5,30 @@ import type {
   AdPlacement,
   Announcement,
   Category,
+  Community,
+  CommunityCategory,
+  EventItem,
+  EventWithCommunity,
+  Influencer,
   ItemWithCategory,
+  PricingConfig,
   SearchResult,
 } from '@/types';
+
+const ITEM_TIER_RANK: Record<string, number> = {
+  featured: 0,
+  highlight: 1,
+  basic: 2,
+  none: 3,
+};
+
+function sortItemsByHighlight(rows: ItemWithCategory[]): ItemWithCategory[] {
+  return rows.slice().sort((a, b) => {
+    const ra = ITEM_TIER_RANK[a.highlight_tier ?? 'none'] ?? 3;
+    const rb = ITEM_TIER_RANK[b.highlight_tier ?? 'none'] ?? 3;
+    return ra - rb;
+  });
+}
 
 // Query helpers server-side. Menelan error agar UI bisa graceful fallback
 // (return array kosong) saat DB belum siap / tabel belum di-migrate.
@@ -63,7 +84,7 @@ export async function getFeaturedItems(
     console.warn(`[getFeaturedItems:${categorySlug}]`, error.message);
     return [];
   }
-  return (data ?? []) as ItemWithCategory[];
+  return sortItemsByHighlight((data ?? []) as ItemWithCategory[]);
 }
 
 export type ItemsSort = 'newest' | 'popular' | 'az';
@@ -102,7 +123,7 @@ export async function getItemsByCategory(
     console.warn(`[getItemsByCategory:${categorySlug}]`, error.message);
     return [];
   }
-  return (data ?? []) as ItemWithCategory[];
+  return sortItemsByHighlight((data ?? []) as ItemWithCategory[]);
 }
 
 // Ambil daftar unik subcategory untuk sebuah kategori — dipakai untuk tab/filter.
@@ -170,6 +191,28 @@ export async function getPublishedItemSlugs(): Promise<
     if (cat?.slug) out.push({ category: cat.slug, slug: row.slug });
   }
   return out;
+}
+
+// Ambil featured & highlight items across all categories — dipakai homepage "Pilihan Unggulan".
+export async function getFeaturedItemsForHomepage(
+  limit = 6,
+): Promise<ItemWithCategory[]> {
+  const supabase = createClient();
+  const nowIso = new Date().toISOString();
+  const { data, error } = await supabase
+    .from('items')
+    .select('*, category:categories!inner(name, slug, color, icon)')
+    .eq('is_published', true)
+    .in('highlight_tier', ['featured', 'highlight'])
+    .or(`highlight_expires_at.is.null,highlight_expires_at.gt.${nowIso}`)
+    .order('view_count', { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    console.warn('[getFeaturedItemsForHomepage]', error.message);
+    return [];
+  }
+  return sortItemsByHighlight((data ?? []) as ItemWithCategory[]);
 }
 
 // Item terkait — kategori yang sama, exclude current item.
@@ -304,6 +347,453 @@ export async function getActiveAds(
     return [];
   }
   return (data ?? []) as Ad[];
+}
+
+// =========================================================================
+// INFLUENCERS — direktori content creator lokal.
+// =========================================================================
+
+export type InfluencerFilters = {
+  niche?: string;
+  platform?: string;
+  budget?: 'low' | 'mid' | 'high';
+  sort?: 'popular' | 'followers' | 'cheapest';
+};
+
+// Hitung total followers dari kolom platforms jsonb (untuk sort).
+function totalFollowers(inf: Influencer): number {
+  return (inf.platforms ?? []).reduce((acc, p) => acc + (p.followers || 0), 0);
+}
+
+export async function getInfluencers(
+  filters: InfluencerFilters = {},
+): Promise<Influencer[]> {
+  const supabase = createClient();
+  let query = supabase
+    .from('influencers')
+    .select('*')
+    .eq('is_published', true);
+
+  if (filters.niche && filters.niche.trim() !== '') {
+    query = query.contains('niches', [filters.niche]);
+  }
+  if (filters.budget === 'low') {
+    query = query.lte('rate_max', 200000);
+  } else if (filters.budget === 'mid') {
+    query = query.gte('rate_min', 200000).lte('rate_max', 500000);
+  } else if (filters.budget === 'high') {
+    query = query.gte('rate_min', 500000);
+  }
+
+  const { data, error } = await query;
+  if (error) {
+    console.warn('[getInfluencers]', error.message);
+    return [];
+  }
+
+  let rows = (data ?? []) as Influencer[];
+
+  if (filters.platform && filters.platform.trim() !== '') {
+    const p = filters.platform.toLowerCase();
+    rows = rows.filter((r) =>
+      (r.platforms ?? []).some((pl) => pl.platform === p),
+    );
+  }
+
+  // Sort: highlighted tier di atas, lalu by pilihan user.
+  const tierRank: Record<string, number> = {
+    featured: 0,
+    highlight: 1,
+    basic: 2,
+    none: 3,
+  };
+
+  rows.sort((a, b) => {
+    const ta = tierRank[a.highlight_tier] ?? 3;
+    const tb = tierRank[b.highlight_tier] ?? 3;
+    if (ta !== tb) return ta - tb;
+
+    if (filters.sort === 'followers') {
+      return totalFollowers(b) - totalFollowers(a);
+    }
+    if (filters.sort === 'cheapest') {
+      return (a.rate_min ?? Infinity) - (b.rate_min ?? Infinity);
+    }
+    // default / 'popular' — by view_count
+    return (b.view_count ?? 0) - (a.view_count ?? 0);
+  });
+
+  return rows;
+}
+
+export async function getFeaturedInfluencers(
+  limit = 2,
+): Promise<Influencer[]> {
+  const supabase = createClient();
+  const nowIso = new Date().toISOString();
+  const { data, error } = await supabase
+    .from('influencers')
+    .select('*')
+    .eq('is_published', true)
+    .in('highlight_tier', ['featured', 'highlight'])
+    .or(`highlight_expires_at.is.null,highlight_expires_at.gt.${nowIso}`)
+    .order('highlight_tier', { ascending: true })
+    .order('view_count', { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    console.warn('[getFeaturedInfluencers]', error.message);
+    return [];
+  }
+  return (data ?? []) as Influencer[];
+}
+
+export async function getInfluencerBySlug(
+  slug: string,
+): Promise<Influencer | null> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from('influencers')
+    .select('*')
+    .eq('slug', slug)
+    .eq('is_published', true)
+    .maybeSingle();
+
+  if (error) {
+    console.warn(`[getInfluencerBySlug:${slug}]`, error.message);
+    return null;
+  }
+  return (data as Influencer | null) ?? null;
+}
+
+export async function getInfluencerSlugs(): Promise<string[]> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from('influencers')
+    .select('slug')
+    .eq('is_published', true);
+
+  if (error || !data) return [];
+  return (data as Array<{ slug: string }>).map((r) => r.slug);
+}
+
+// =========================================================================
+// PRICING — konfigurasi paket harga untuk halaman /harga.
+// =========================================================================
+
+export async function getPricingTiers(): Promise<PricingConfig[]> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from('pricing_config')
+    .select('*')
+    .eq('is_active', true)
+    .order('order_index', { ascending: true });
+
+  if (error) {
+    console.warn('[getPricingTiers]', error.message);
+    return [];
+  }
+  return (data ?? []) as PricingConfig[];
+}
+
+// =========================================================================
+// COMMUNITIES — direktori komunitas lokal.
+// =========================================================================
+
+export type CommunityFilters = {
+  category?: CommunityCategory | string;
+  isOpen?: boolean;
+  sort?: 'popular' | 'members' | 'newest' | 'az';
+};
+
+function sortCommunitiesByTier(rows: Community[]): Community[] {
+  return rows.slice().sort((a, b) => {
+    const ra = ITEM_TIER_RANK[a.highlight_tier ?? 'none'] ?? 3;
+    const rb = ITEM_TIER_RANK[b.highlight_tier ?? 'none'] ?? 3;
+    return ra - rb;
+  });
+}
+
+export async function getCommunities(
+  filters: CommunityFilters = {},
+): Promise<Community[]> {
+  const supabase = createClient();
+  let query = supabase
+    .from('communities')
+    .select('*')
+    .eq('is_published', true);
+
+  if (filters.category && filters.category.trim() !== '') {
+    query = query.eq('category', filters.category);
+  }
+  if (filters.isOpen) {
+    query = query.eq('is_open', true);
+  }
+
+  const { data, error } = await query;
+  if (error) {
+    console.warn('[getCommunities]', error.message);
+    return [];
+  }
+
+  let rows = (data ?? []) as Community[];
+  rows = sortCommunitiesByTier(rows);
+
+  if (filters.sort === 'members') {
+    rows.sort((a, b) => {
+      const ra = ITEM_TIER_RANK[a.highlight_tier ?? 'none'] ?? 3;
+      const rb = ITEM_TIER_RANK[b.highlight_tier ?? 'none'] ?? 3;
+      if (ra !== rb) return ra - rb;
+      return (b.member_count ?? 0) - (a.member_count ?? 0);
+    });
+  } else if (filters.sort === 'newest') {
+    rows.sort((a, b) => {
+      const ra = ITEM_TIER_RANK[a.highlight_tier ?? 'none'] ?? 3;
+      const rb = ITEM_TIER_RANK[b.highlight_tier ?? 'none'] ?? 3;
+      if (ra !== rb) return ra - rb;
+      return (
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+    });
+  } else if (filters.sort === 'az') {
+    rows.sort((a, b) => {
+      const ra = ITEM_TIER_RANK[a.highlight_tier ?? 'none'] ?? 3;
+      const rb = ITEM_TIER_RANK[b.highlight_tier ?? 'none'] ?? 3;
+      if (ra !== rb) return ra - rb;
+      return a.name.localeCompare(b.name, 'id');
+    });
+  } else {
+    rows.sort((a, b) => {
+      const ra = ITEM_TIER_RANK[a.highlight_tier ?? 'none'] ?? 3;
+      const rb = ITEM_TIER_RANK[b.highlight_tier ?? 'none'] ?? 3;
+      if (ra !== rb) return ra - rb;
+      return (b.view_count ?? 0) - (a.view_count ?? 0);
+    });
+  }
+
+  return rows;
+}
+
+export async function getFeaturedCommunities(
+  limit = 2,
+): Promise<Community[]> {
+  const supabase = createClient();
+  const nowIso = new Date().toISOString();
+  const { data, error } = await supabase
+    .from('communities')
+    .select('*')
+    .eq('is_published', true)
+    .in('highlight_tier', ['featured', 'highlight'])
+    .or(`highlight_expires_at.is.null,highlight_expires_at.gt.${nowIso}`)
+    .order('view_count', { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    console.warn('[getFeaturedCommunities]', error.message);
+    return [];
+  }
+  return sortCommunitiesByTier((data ?? []) as Community[]);
+}
+
+export async function getCommunityBySlug(
+  slug: string,
+): Promise<Community | null> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from('communities')
+    .select('*')
+    .eq('slug', slug)
+    .eq('is_published', true)
+    .maybeSingle();
+
+  if (error) {
+    console.warn(`[getCommunityBySlug:${slug}]`, error.message);
+    return null;
+  }
+  return (data as Community | null) ?? null;
+}
+
+export async function getCommunitySlugs(): Promise<string[]> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from('communities')
+    .select('slug')
+    .eq('is_published', true);
+
+  if (error || !data) return [];
+  return (data as Array<{ slug: string }>).map((r) => r.slug);
+}
+
+// =========================================================================
+// EVENTS — agenda kegiatan publik.
+// =========================================================================
+
+export type EventFilters = {
+  category?: string;
+  communityId?: string;
+  timeframe?: 'upcoming' | 'past' | 'all';
+  priceFilter?: 'free' | 'paid';
+  sort?: 'soonest' | 'popular' | 'newest';
+};
+
+function normalizeEventRow(r: unknown): EventWithCommunity {
+  const row = r as EventItem & {
+    community:
+      | { id: string; name: string; slug: string; logo_url: string | null }
+      | Array<{
+          id: string;
+          name: string;
+          slug: string;
+          logo_url: string | null;
+        }>
+      | null;
+  };
+  const c = Array.isArray(row.community) ? row.community[0] : row.community;
+  return {
+    ...row,
+    community: c ?? null,
+  };
+}
+
+export async function getEvents(
+  filters: EventFilters = {},
+): Promise<EventWithCommunity[]> {
+  const supabase = createClient();
+  let query = supabase
+    .from('events')
+    .select('*, community:communities(id, name, slug, logo_url)')
+    .eq('is_published', true);
+
+  if (filters.category && filters.category.trim() !== '') {
+    query = query.eq('category', filters.category);
+  }
+  if (filters.communityId) {
+    query = query.eq('community_id', filters.communityId);
+  }
+  if (filters.priceFilter === 'free') {
+    query = query.eq('ticket_price', 0);
+  } else if (filters.priceFilter === 'paid') {
+    query = query.gt('ticket_price', 0);
+  }
+
+  const nowIso = new Date().toISOString();
+  if (filters.timeframe === 'past') {
+    query = query.lt('start_date', nowIso).order('start_date', {
+      ascending: false,
+    });
+  } else if (filters.timeframe === 'all') {
+    if (filters.sort === 'newest') {
+      query = query.order('created_at', { ascending: false });
+    } else if (filters.sort === 'popular') {
+      query = query.order('view_count', { ascending: false });
+    } else {
+      query = query.order('start_date', { ascending: true });
+    }
+  } else {
+    query = query.gte('start_date', nowIso).order('start_date', {
+      ascending: true,
+    });
+  }
+
+  const { data, error } = await query;
+  if (error) {
+    console.warn('[getEvents]', error.message);
+    return [];
+  }
+  return (data ?? []).map(normalizeEventRow);
+}
+
+export async function getUpcomingEvents(
+  limit = 3,
+): Promise<EventWithCommunity[]> {
+  const supabase = createClient();
+  const nowIso = new Date().toISOString();
+  const { data, error } = await supabase
+    .from('events')
+    .select('*, community:communities(id, name, slug, logo_url)')
+    .eq('is_published', true)
+    .gte('start_date', nowIso)
+    .order('is_featured', { ascending: false })
+    .order('start_date', { ascending: true })
+    .limit(limit);
+
+  if (error) {
+    console.warn('[getUpcomingEvents]', error.message);
+    return [];
+  }
+  return (data ?? []).map(normalizeEventRow);
+}
+
+export async function getFeaturedEvents(
+  limit = 2,
+): Promise<EventWithCommunity[]> {
+  const supabase = createClient();
+  const nowIso = new Date().toISOString();
+  const { data, error } = await supabase
+    .from('events')
+    .select('*, community:communities(id, name, slug, logo_url)')
+    .eq('is_published', true)
+    .eq('is_featured', true)
+    .gte('start_date', nowIso)
+    .order('start_date', { ascending: true })
+    .limit(limit);
+
+  if (error) {
+    console.warn('[getFeaturedEvents]', error.message);
+    return [];
+  }
+  return (data ?? []).map(normalizeEventRow);
+}
+
+export async function getEventBySlug(
+  slug: string,
+): Promise<EventWithCommunity | null> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from('events')
+    .select('*, community:communities(id, name, slug, logo_url)')
+    .eq('slug', slug)
+    .eq('is_published', true)
+    .maybeSingle();
+
+  if (error) {
+    console.warn(`[getEventBySlug:${slug}]`, error.message);
+    return null;
+  }
+  return data ? normalizeEventRow(data) : null;
+}
+
+export async function getEventSlugs(): Promise<string[]> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from('events')
+    .select('slug')
+    .eq('is_published', true);
+
+  if (error || !data) return [];
+  return (data as Array<{ slug: string }>).map((r) => r.slug);
+}
+
+export async function getEventsByCommunity(
+  communityId: string,
+  limit = 3,
+): Promise<EventItem[]> {
+  const supabase = createClient();
+  const nowIso = new Date().toISOString();
+  const { data, error } = await supabase
+    .from('events')
+    .select('*')
+    .eq('is_published', true)
+    .eq('community_id', communityId)
+    .gte('start_date', nowIso)
+    .order('start_date', { ascending: true })
+    .limit(limit);
+
+  if (error) {
+    console.warn(`[getEventsByCommunity:${communityId}]`, error.message);
+    return [];
+  }
+  return (data ?? []) as EventItem[];
 }
 
 // Pencarian menggunakan kombinasi ilike (title/description/address) + contains (tags).

@@ -10,6 +10,12 @@ import {
   MessageSquarePlus,
   Megaphone,
   Sparkles,
+  Star,
+  Tag,
+  Users,
+  UsersRound,
+  CalendarDays,
+  ClipboardList,
   ExternalLink,
   LogOut,
   Menu,
@@ -45,6 +51,12 @@ const NAV_ITEMS: readonly NavItem[] = [
   },
   { href: '/admin/announcements', label: 'Pengumuman', icon: Megaphone },
   { href: '/admin/ads', label: 'Iklan', icon: Sparkles },
+  { href: '/admin/highlights', label: 'Highlights', icon: Star },
+  { href: '/admin/influencers', label: 'Influencer', icon: Users },
+  { href: '/admin/communities', label: 'Komunitas', icon: UsersRound },
+  { href: '/admin/events', label: 'Event', icon: CalendarDays },
+  { href: '/admin/claims', label: 'Klaim', icon: ClipboardList },
+  { href: '/admin/pricing', label: 'Paket Harga', icon: Tag },
 ];
 
 function isActive(href: string, pathname: string) {

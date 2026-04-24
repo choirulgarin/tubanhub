@@ -44,6 +44,21 @@ export function Footer() {
                   Jasa
                 </Link>
               </li>
+              <li>
+                <Link href="/influencer" className="text-white/60 transition-colors hover:text-white">
+                  Influencer
+                </Link>
+              </li>
+              <li>
+                <Link href="/komunitas" className="text-white/60 transition-colors hover:text-white">
+                  Komunitas
+                </Link>
+              </li>
+              <li>
+                <Link href="/event" className="text-white/60 transition-colors hover:text-white">
+                  Event
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -56,6 +71,16 @@ export function Footer() {
               <li>
                 <Link href="/tentang" className="text-white/60 transition-colors hover:text-white">
                   Tentang Kami
+                </Link>
+              </li>
+              <li>
+                <Link href="/harga" className="text-white/60 transition-colors hover:text-white">
+                  Harga &amp; Paket
+                </Link>
+              </li>
+              <li>
+                <Link href="/klaim" className="text-white/60 transition-colors hover:text-white">
+                  Klaim Listing
                 </Link>
               </li>
               <li>

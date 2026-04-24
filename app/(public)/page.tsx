@@ -8,26 +8,39 @@ import { AnnouncementBanner } from '@/components/AnnouncementBanner';
 import { AdCard } from '@/components/ads/AdCard';
 import { EmergencyNumbers } from '@/components/EmergencyNumbers';
 import { getIcon } from '@/lib/icons';
+import { EventCard } from '@/components/event/EventCard';
 import {
   getActiveAds,
   getActiveBannerAnnouncement,
   getCategories,
   getCategoryCounts,
   getFeaturedItems,
+  getFeaturedItemsForHomepage,
+  getUpcomingEvents,
 } from '@/lib/queries';
 
 export const revalidate = 300;
 
 export default async function HomePage() {
-  const [categories, counts, birokrasiItems, wisataItems, banner, ads] =
-    await Promise.all([
-      getCategories(),
-      getCategoryCounts(),
-      getFeaturedItems('birokrasi', 3),
-      getFeaturedItems('wisata', 3),
-      getActiveBannerAnnouncement(),
-      getActiveAds('home_bottom', undefined, 3),
-    ]);
+  const [
+    categories,
+    counts,
+    birokrasiItems,
+    wisataItems,
+    banner,
+    ads,
+    unggulan,
+    upcomingEvents,
+  ] = await Promise.all([
+    getCategories(),
+    getCategoryCounts(),
+    getFeaturedItems('birokrasi', 3),
+    getFeaturedItems('wisata', 3),
+    getActiveBannerAnnouncement(),
+    getActiveAds('home_bottom', undefined, 3),
+    getFeaturedItemsForHomepage(6),
+    getUpcomingEvents(3),
+  ]);
 
   return (
     <>
@@ -92,6 +105,33 @@ export default async function HomePage() {
           </p>
         </div>
       </section>
+
+      {/* =================================================================
+          PILIHAN UNGGULAN — featured & highlighted listings lintas kategori
+          ================================================================= */}
+      {unggulan.length > 0 && (
+        <section className="border-t border-border bg-amber-50/20 py-12 md:py-16">
+          <div className="mx-auto w-full max-w-6xl px-4">
+            <div className="mb-6 flex items-end justify-between gap-4">
+              <div>
+                <h2 className="text-xl font-semibold text-foreground">
+                  Pilihan Unggulan
+                </h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Listing bersponsor &amp; terpilih dari seluruh kategori.
+                </p>
+              </div>
+              <Link
+                href="/harga"
+                className="whitespace-nowrap text-xs font-medium text-muted-foreground hover:text-foreground"
+              >
+                Pasang highlight →
+              </Link>
+            </div>
+            <ItemGrid items={unggulan} />
+          </div>
+        </section>
+      )}
 
       {/* =================================================================
           CATEGORY
@@ -203,6 +243,37 @@ export default async function HomePage() {
           />
         </div>
       </section>
+
+      {/* =================================================================
+          EVENT MENDATANG — 3 event terdekat
+          ================================================================= */}
+      {upcomingEvents.length > 0 && (
+        <section className="border-t border-border py-12">
+          <div className="mx-auto w-full max-w-6xl px-4">
+            <div className="mb-6 flex items-end justify-between gap-4">
+              <div>
+                <h2 className="text-xl font-semibold text-foreground">
+                  Event Mendatang
+                </h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Agenda publik, festival, dan meetup di Tuban.
+                </p>
+              </div>
+              <Link
+                href="/event"
+                className="whitespace-nowrap text-sm font-medium text-primary hover:underline"
+              >
+                Lihat semua →
+              </Link>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {upcomingEvents.map((e) => (
+                <EventCard key={e.id} event={e} />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* =================================================================
           KONTAK DARURAT — quick-access untuk warga

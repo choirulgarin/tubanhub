@@ -45,6 +45,8 @@ export type Item = {
   is_published: boolean;
   is_verified: boolean;
   view_count: number;
+  highlight_tier: HighlightTier;
+  highlight_expires_at: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -118,6 +120,193 @@ export type Ad = {
   clicks: number;
   created_at: string;
   updated_at: string;
+};
+
+// Influencer — direktori content creator lokal Tuban.
+export type InfluencerPlatform = {
+  platform: string; // instagram | tiktok | youtube | facebook | twitter
+  username: string;
+  followers: number;
+  url: string;
+};
+
+export type ContentLanguage = 'indonesia' | 'jawa' | 'campur';
+
+export type HighlightTier = 'none' | 'basic' | 'highlight' | 'featured';
+
+export type Influencer = {
+  id: string;
+  name: string;
+  slug: string;
+  bio: string | null;
+  photo_url: string | null;
+  location: string | null;
+  district: string | null;
+  platforms: InfluencerPlatform[];
+  niches: string[];
+  content_language: ContentLanguage;
+  rate_min: number | null;
+  rate_max: number | null;
+  rate_notes: string | null;
+  contact_wa: string | null;
+  contact_email: string | null;
+  contact_dm: string | null;
+  is_verified: boolean;
+  is_claimed: boolean;
+  is_umkm_friendly: boolean;
+  is_fast_response: boolean;
+  highlight_tier: HighlightTier;
+  highlight_expires_at: string | null;
+  view_count: number;
+  is_published: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ClaimListingType =
+  | 'influencer'
+  | 'wisata'
+  | 'kuliner'
+  | 'jasa'
+  | 'birokrasi';
+
+export type ClaimStatus = 'pending' | 'approved' | 'rejected';
+
+export type ClaimRequest = {
+  id: string;
+  listing_type: ClaimListingType;
+  listing_name: string;
+  owner_name: string;
+  proof_url: string | null;
+  contact_wa: string | null;
+  contact_email: string | null;
+  status: ClaimStatus;
+  notes: string | null;
+  created_at: string;
+};
+
+// Pricing — konfigurasi paket harga publik, dieditabel via admin.
+export type PricingTierKey =
+  | 'free'
+  | 'basic'
+  | 'highlight'
+  | 'featured'
+  | 'klaim'
+  | string;
+
+export type PricingConfig = {
+  id: string;
+  tier_key: PricingTierKey;
+  tier_label: string;
+  tagline: string | null;
+  price_monthly: number;
+  price_yearly: number;
+  price_note: string | null;
+  features: string[];
+  cta_label: string | null;
+  cta_href: string | null;
+  is_featured: boolean;
+  is_active: boolean;
+  order_index: number;
+  created_at: string;
+  updated_at: string;
+};
+
+// Komunitas — direktori komunitas lokal Tuban.
+export type CommunityCategory =
+  | 'olahraga'
+  | 'seni-budaya'
+  | 'bisnis-umkm'
+  | 'sosial-lingkungan'
+  | 'teknologi-kreatif'
+  | 'pendidikan'
+  | 'hobi'
+  | 'keagamaan'
+  | 'umum';
+
+export type Community = {
+  id: string;
+  name: string;
+  slug: string;
+  tagline: string | null;
+  description: string | null;
+  category: CommunityCategory;
+  logo_url: string | null;
+  cover_url: string | null;
+  website: string | null;
+  contact_wa: string | null;
+  contact_email: string | null;
+  instagram: string | null;
+  facebook: string | null;
+  tiktok: string | null;
+  youtube: string | null;
+  whatsapp_group: string | null;
+  telegram_group: string | null;
+  area: string | null;
+  district: string | null;
+  meeting_place: string | null;
+  meeting_schedule: string | null;
+  member_count: number;
+  founded_year: number | null;
+  is_verified: boolean;
+  is_claimed: boolean;
+  is_open: boolean;
+  tags: string[];
+  highlight_tier: HighlightTier;
+  highlight_expires_at: string | null;
+  view_count: number;
+  is_published: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+// Event — agenda kegiatan publik di Tuban.
+export type EventCategory =
+  | 'umum'
+  | 'olahraga'
+  | 'bisnis'
+  | 'sosial'
+  | 'seni-budaya'
+  | 'keagamaan'
+  | 'pendidikan'
+  | 'teknologi';
+
+export type EventItem = {
+  id: string;
+  title: string;
+  slug: string;
+  tagline: string | null;
+  description: string | null;
+  content: string | null;
+  category: EventCategory;
+  cover_url: string | null;
+  community_id: string | null;
+  organizer_name: string | null;
+  organizer_contact: string | null;
+  start_date: string;
+  end_date: string | null;
+  location_name: string | null;
+  location_address: string | null;
+  district: string | null;
+  gmaps_url: string | null;
+  is_online: boolean;
+  online_url: string | null;
+  ticket_price: number;
+  ticket_note: string | null;
+  registration_url: string | null;
+  registration_deadline: string | null;
+  max_attendees: number | null;
+  current_attendees: number;
+  tags: string[];
+  is_featured: boolean;
+  is_published: boolean;
+  view_count: number;
+  created_at: string;
+  updated_at: string;
+};
+
+export type EventWithCommunity = EventItem & {
+  community?: Pick<Community, 'id' | 'name' | 'slug' | 'logo_url'> | null;
 };
 
 // Shape hasil dari RPC search_items().

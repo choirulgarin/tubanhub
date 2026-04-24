@@ -46,6 +46,36 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'monthly',
       priority: 0.5,
     },
+    {
+      url: `${APP_URL}/influencer`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.8,
+    },
+    {
+      url: `${APP_URL}/komunitas`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.8,
+    },
+    {
+      url: `${APP_URL}/event`,
+      lastModified: new Date(),
+      changeFrequency: 'daily',
+      priority: 0.8,
+    },
+    {
+      url: `${APP_URL}/klaim`,
+      lastModified: new Date(),
+      changeFrequency: 'yearly',
+      priority: 0.5,
+    },
+    {
+      url: `${APP_URL}/harga`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.6,
+    },
   ];
 
   const supabase = createAdminClient();
@@ -113,10 +143,58 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.5,
     }));
 
+  // Influencer published.
+  const { data: influencers } = await supabase
+    .from('influencers')
+    .select('slug, updated_at')
+    .eq('is_published', true);
+
+  const influencerEntries: MetadataRoute.Sitemap = (
+    (influencers ?? []) as Array<{ slug: string; updated_at: string }>
+  ).map((r) => ({
+    url: `${APP_URL}/influencer/${r.slug}`,
+    lastModified: new Date(r.updated_at),
+    changeFrequency: 'weekly' as const,
+    priority: 0.6,
+  }));
+
+  // Komunitas published.
+  const { data: communities } = await supabase
+    .from('communities')
+    .select('slug, updated_at')
+    .eq('is_published', true);
+
+  const communityEntries: MetadataRoute.Sitemap = (
+    (communities ?? []) as Array<{ slug: string; updated_at: string }>
+  ).map((r) => ({
+    url: `${APP_URL}/komunitas/${r.slug}`,
+    lastModified: new Date(r.updated_at),
+    changeFrequency: 'weekly' as const,
+    priority: 0.6,
+  }));
+
+  // Event published.
+  const { data: events } = await supabase
+    .from('events')
+    .select('slug, updated_at')
+    .eq('is_published', true);
+
+  const eventEntries: MetadataRoute.Sitemap = (
+    (events ?? []) as Array<{ slug: string; updated_at: string }>
+  ).map((r) => ({
+    url: `${APP_URL}/event/${r.slug}`,
+    lastModified: new Date(r.updated_at),
+    changeFrequency: 'weekly' as const,
+    priority: 0.6,
+  }));
+
   return [
     ...staticEntries,
     ...categoryEntries,
     ...itemEntries,
     ...announcementEntries,
+    ...influencerEntries,
+    ...communityEntries,
+    ...eventEntries,
   ];
 }
